@@ -331,10 +331,9 @@ Find or allocate a bucket for an address
 */
 #include <map>
 
-static leakyBucket_t *SVC_BucketForAddress( netadr_t address, int burst, int period ) {
+static leakyBucket_t *SVC_BucketForAddress( netadr_t address, int burst, int period, int now ) {
 	static std::map<int, leakyBucket_t> bucketMap;
 	static unsigned int	callCounter = 0;
-	int	now = Sys_Milliseconds();
 
 	if (address.type != NA_IP) {
 		return NULL;
@@ -364,9 +363,8 @@ static leakyBucket_t *SVC_BucketForAddress( netadr_t address, int burst, int per
 SVC_RateLimit
 ================
 */
-qboolean SVC_RateLimit( leakyBucket_t *bucket, int burst, int period ) {
+qboolean SVC_RateLimit( leakyBucket_t *bucket, int burst, int period, int now ) {
 	if ( bucket != NULL ) {
-		int now = Sys_Milliseconds();
 		int interval = now - bucket->lastTime;
 		int expired = interval / period;
 		int expiredRemainder = interval % period;
@@ -396,10 +394,10 @@ SVC_RateLimitAddress
 Rate limit for a particular address
 ================
 */
-qboolean SVC_RateLimitAddress( netadr_t from, int burst, int period ) {
-	leakyBucket_t *bucket = SVC_BucketForAddress( from, burst, period );
+qboolean SVC_RateLimitAddress( netadr_t from, int burst, int period, int now ) {
+	leakyBucket_t *bucket = SVC_BucketForAddress( from, burst, period, now );
 
-	return SVC_RateLimit( bucket, burst, period );
+	return SVC_RateLimit( bucket, burst, period, now );
 }
 
 /*
@@ -663,6 +661,7 @@ connectionless packets.
 */
 void SV_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 	static leakyBucket_t	bucket;
+	int		now = Sys_Milliseconds();
 	char	*s;
 	char	*c;
 
@@ -670,7 +669,7 @@ void SV_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 		int rate = Com_Clampi(1, 1000, sv_maxOOBRateIP->integer);
 		int period = 1000 / rate;
 
-		if (SVC_RateLimitAddress(from, rate, period)) {
+		if (SVC_RateLimitAddress(from, rate, period, now)) {
 			return;
 		}
 	}
@@ -679,7 +678,7 @@ void SV_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 		int rate = Com_Clampi(1, 1000, sv_maxOOBRate->integer);
 		int period = 1000 / rate;
 
-		if (SVC_RateLimit(&bucket, rate, period)) {
+		if (SVC_RateLimit(&bucket, rate, period, now)) {
 			return;
 		}
 	}
