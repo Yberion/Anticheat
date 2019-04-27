@@ -322,8 +322,6 @@ CONNECTIONLESS COMMANDS
 ==============================================================================
 */
 
-leakyBucket_t outboundLeakyBucket;
-
 /*
 ================
 SVC_BucketForAddress
@@ -614,14 +612,6 @@ void SVC_RemoteCommand( netadr_t from, msg_t *msg ) {
 
 	if ( !strlen( sv_rconPassword->string ) ||
 		strcmp (Cmd_Argv(1), sv_rconPassword->string) ) {
-		static leakyBucket_t bucket;
-
-		// Make DoS via rcon impractical
-		if ( SVC_RateLimit( &bucket, 10, 1000 ) ) {
-			Com_DPrintf( "SVC_RemoteCommand: rate limit exceeded, dropping request\n" );
-			return;
-		}
-
 		valid = qfalse;
 		Com_Printf ("Bad rcon from %s: %s\n", NET_AdrToString (from), Cmd_ArgsFrom(2) );
 	} else {
