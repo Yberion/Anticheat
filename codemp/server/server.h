@@ -297,6 +297,8 @@ extern	cvar_t	*sv_autoDemoBots;
 extern	cvar_t	*sv_autoDemoMaxMaps;
 extern	cvar_t	*sv_legacyFixes;
 extern	cvar_t	*sv_banFile;
+extern	cvar_t	*sv_maxOOBRate;
+extern	cvar_t	*sv_maxOOBRateIP;
 
 extern	cvar_t	*sv_snapShotDuelCull;
 
