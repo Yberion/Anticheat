@@ -957,7 +957,7 @@ void SV_Init (void) {
 	//cvar_t	*sv_clientRate;
 	sv_ratePolicy = Cvar_Get( "sv_ratePolicy", "1", CVAR_ARCHIVE_ND, "Determines which policy of enforcement is used for client's \"rate\" cvar" );
 	Cvar_CheckRange(sv_ratePolicy, 1, 2, qtrue);
-	sv_clientRate = Cvar_Get( "sv_clientRate", "90000", CVAR_ARCHIVE_ND);
+	sv_clientRate = Cvar_Get( "sv_clientRate", "25000", CVAR_ARCHIVE_ND);
 	sv_minRate = Cvar_Get ("sv_minRate", "0", CVAR_ARCHIVE_ND | CVAR_SERVERINFO, "Min bandwidth rate allowed on server. Use 0 for unlimited." );
 	sv_maxRate = Cvar_Get ("sv_maxRate", "0", CVAR_ARCHIVE_ND | CVAR_SERVERINFO, "Max bandwidth rate allowed on server. Use 0 for unlimited." );
 	sv_minPing = Cvar_Get ("sv_minPing", "0", CVAR_ARCHIVE_ND | CVAR_SERVERINFO );
@@ -1030,6 +1030,14 @@ void SV_Init (void) {
 #ifdef DEDICATED
 	sv_antiDST = Cvar_Get("sv_antiDST", "1", CVAR_NONE, "Attempts to detect and kick players injecting or using DST");
 #endif
+
+    // EslAnticheat -------------->
+    sv_eslAnticheat_packetsIngameDelayBeforeWarnings = Cvar_Get("sv_packetsIngameDelayBeforeWarnings", "2", CVAR_NONE);
+    sv_eslAnticheat_packetsIngameDelayBetweenWarnings = Cvar_Get("sv_packetsIngameDelayBetweenWarnings", "5", CVAR_NONE);
+    sv_eslAnticheat_packetsMinimumAllowed = Cvar_Get("sv_packetsMinimumAllowed", "60", CVAR_NONE);
+    sv_eslAnticheat_packetsMaximumAllowed = Cvar_Get("sv_packetsMaximumAllowed", "100", CVAR_NONE);
+    sv_eslAnticheat_packetsErrorMargin = Cvar_Get("sv_packetsErrorMargin", "20", CVAR_NONE);
+    // EslAnticheat <--------------
 
 	// initialize bot cvars so they are listed and can be set before loading the botlib
 	SV_BotInitCvars();

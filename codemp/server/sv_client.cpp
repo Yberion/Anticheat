@@ -602,6 +602,10 @@ void SV_ClientEnterWorld( client_t *client, usercmd_t *cmd ) {
 	client->lastUserInfoChange = 0; //reset the delay
 	client->lastUserInfoCount = 0; //reset the count
 
+    // EslAnticheat -------------->
+    client->eslAnticheat.inGameTime = 0; // reset in game time
+    // EslAnticheat <--------------
+
 	client->deltaMessage = -1;
 	client->nextSnapshotTime = svs.time;	// generate a snapshot immediately
 
@@ -1462,14 +1466,16 @@ typedef struct ucmd_s {
 } ucmd_t;
 
 static ucmd_t ucmds[] = {
-	{"userinfo", SV_UpdateUserinfo_f},
-	{"disconnect", SV_Disconnect_f},
-	{"cp", SV_VerifyPaks_f},
-	{"vdr", SV_ResetPureClient_f},
-	{"download", SV_BeginDownload_f},
-	{"nextdl", SV_NextDownload_f},
-	{"stopdl", SV_StopDownload_f},
-	{"donedl", SV_DoneDownload_f},
+	{"userinfo",		SV_UpdateUserinfo_f},
+	{"disconnect",		SV_Disconnect_f},
+	{"cp",				SV_VerifyPaks_f},
+	{"vdr",				SV_ResetPureClient_f},
+	{"download",		SV_BeginDownload_f},
+	{"nextdl",			SV_NextDownload_f},
+	{"stopdl",			SV_StopDownload_f},
+	{"donedl",			SV_DoneDownload_f},
+	{"netstatus",		EslAnticheat_NetStatus_f},
+	{"shownet",			EslAnticheat_NetStatus_f}, //EternalJK client
 
 	{NULL, NULL}
 };
@@ -1771,10 +1777,14 @@ static void SV_UserMove( client_t *cl, msg_t *msg, qboolean delta ) {
 		oldcmd = cmd;
 	}
 
+	// EslAnticheat -------------->
+	int Sys_Milliseconds_ = Sys_Milliseconds();
+	// EslAnticheat <--------------
+
 	// save time for ping calculation
 	// With sv_pingFix enabled we store the time of the first acknowledge, instead of the last. And we use a time value that is not limited by sv_fps.
 	if (!sv_pingFix->integer || cl->frames[cl->messageAcknowledge & PACKET_MASK].messageAcked == -1)
-		cl->frames[cl->messageAcknowledge & PACKET_MASK].messageAcked = (sv_pingFix->integer ? Sys_Milliseconds() : svs.time);
+		cl->frames[cl->messageAcknowledge & PACKET_MASK].messageAcked = (sv_pingFix->integer ? Sys_Milliseconds_ : svs.time);
 
 	// TTimo
 	// catch the no-cp-yet situation before SV_ClientEnterWorld
@@ -1808,6 +1818,12 @@ static void SV_UserMove( client_t *cl, msg_t *msg, qboolean delta ) {
 		return;
 	}
 
+	// EslAnticheat -------------->
+	int		packetIndex;
+
+	packetIndex = cl->eslAnticheat.cmdIndex;
+	// EslAnticheat <--------------
+
 	// usually, the first couple commands will be duplicates
 	// of ones we have previously received, but the servertimes
 	// in the commands will cause them to be immediately discarded
@@ -1825,7 +1841,12 @@ static void SV_UserMove( client_t *cl, msg_t *msg, qboolean delta ) {
 		if ( cmds[i].serverTime <= cl->lastUsercmd.serverTime ) {
 			continue;
 		}
-		SV_ClientThink (cl, &cmds[ i ]);
+
+		// EslAnticheat -------------->
+		EslAnticheat_main(cl, &cmds[i], packetIndex, Sys_Milliseconds_);
+		// EslAnticheat <--------------
+
+		SV_ClientThink (cl, &cmds[i]);
 	}
 }
 

@@ -83,6 +83,14 @@ cvar_t	*sv_hibernateFPS;
 cvar_t	*sv_antiDST;
 #endif
 
+// EslAnticheat -------------->
+cvar_t  *sv_eslAnticheat_packetsIngameDelayBeforeWarnings;
+cvar_t  *sv_eslAnticheat_packetsIngameDelayBetweenWarnings;
+cvar_t  *sv_eslAnticheat_packetsMinimumAllowed;
+cvar_t  *sv_eslAnticheat_packetsMaximumAllowed;
+cvar_t  *sv_eslAnticheat_packetsErrorMargin;
+// EslAnticheat <--------------
+
 serverBan_t serverBans[SERVER_MAXBANS];
 int serverBansCount = 0;
 
@@ -1318,6 +1326,10 @@ void SV_Frame( int msec ) {
 
 	// check timeouts
 	SV_CheckTimeouts();
+
+    // EslAnticheat -------------->
+    // EslAnticheat_CalcTimeNudges();
+    // EslAnticheat <--------------
 
 	// send messages back to the clients
 	SV_SendClientMessages();

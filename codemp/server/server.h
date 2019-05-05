@@ -134,6 +134,41 @@ typedef struct {
 	int			botReliableAcknowledge; // for bots, need to maintain a separate reliableAcknowledge to record server messages into the demo file
 } demoInfo_t;
 
+// EslAnticheat -------------->
+typedef struct ucmdStat_s {
+	int		serverTime;
+	int		packetIndex;
+} ucmdStat_t;
+
+#define CMD_MASK 1024
+
+typedef struct clientEslAnticheat_s {
+	ucmdStat_t      cmdStats[CMD_MASK];
+	int             cmdIndex;
+
+	int             delayCount;
+	int             delaySum;
+	int             pingSum;
+	int             timeNudge; // Approximation (+- 7 with stable connection)
+	int             lastTimeTimeNudgeCalculation;
+	int             lastTimetPacketsFPSCalculation;
+	int             lastTimetAvgPingCalculation;
+
+	/*
+	int             delayCount2;
+	int             delaySum2;
+	int             pingSum2;
+	int             timeNudge2; // Approximation (+- 7)
+	int             lastTimetimeNudgeCalculation2;
+	*/
+
+	int             lastTimeNetStatus;
+	int             inGameTime;
+	float           averagePingSinceConnected;
+	int             averagePingCount;
+	int             lastTimePacketsWarning;
+} clientEslAnticheat_t;
+// EslAnticheat <--------------
 
 typedef struct client_s {
 	clientState_t	state;
@@ -198,6 +233,10 @@ typedef struct client_s {
 #ifdef DEDICATED
 	qboolean		disableDuelCull;
 #endif
+
+    // EslAnticheat -------------->
+    clientEslAnticheat_t   eslAnticheat;
+    // EslAnticheat <--------------
 } client_t;
 
 //=============================================================================
@@ -310,6 +349,14 @@ extern	cvar_t	*sv_hibernateFPS;
 #ifdef DEDICATED
 extern	cvar_t	*sv_antiDST;
 #endif
+
+// EslAnticheat -------------->
+extern	cvar_t* sv_eslAnticheat_packetsIngameDelayBeforeWarnings;
+extern	cvar_t* sv_eslAnticheat_packetsIngameDelayBetweenWarnings;
+extern	cvar_t* sv_eslAnticheat_packetsMinimumAllowed;
+extern	cvar_t* sv_eslAnticheat_packetsMaximumAllowed;
+extern	cvar_t* sv_eslAnticheat_packetsErrorMargin;
+// EslAnticheat <--------------
 
 extern	serverBan_t serverBans[SERVER_MAXBANS];
 extern	int serverBansCount;
@@ -510,3 +557,12 @@ void SV_ClipToEntity( trace_t *trace, const vec3_t start, const vec3_t mins, con
 void SV_Netchan_Transmit( client_t *client, msg_t *msg);	//int length, const byte *data );
 void SV_Netchan_TransmitNextFragment( netchan_t *chan );
 qboolean SV_Netchan_Process( client_t *client, msg_t *msg );
+
+//
+// eslanticheat.c
+//
+// EslAnticheat -------------->
+void SV_CalcTimeNudges(void);
+void EslAnticheat_NetStatus_f(client_t* client);
+void EslAnticheat_main(client_t* cl, usercmd_t* cmd, int packetIndex, int Sys_Milliseconds_);
+// EslAnticheat <--------------
