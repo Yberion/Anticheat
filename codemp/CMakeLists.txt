@@ -331,6 +331,7 @@ if(BuildMPEngine OR BuildMPDed)
 		"${MPDir}/server/sv_gameapi.h"
 		"${MPDir}/server/duel_cull.cpp"
 		"${MPDir}/server/duel_cull.h"
+		"${MPDir}/server/sv_eslanticheat.cpp"
 		)
 	source_group("server" FILES ${MPEngineAndDedServerFiles})
 	set(MPEngineAndDedFiles ${MPEngineAndDedFiles} ${MPEngineAndDedServerFiles})

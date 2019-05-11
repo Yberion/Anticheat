@@ -93,7 +93,7 @@ void EslAnticheat_NetStatus_f(client_t* client)
 	char     status[4048];
 	int				i;
 	client_t* cl;
-	playerState_t* ps;
+	playerState_t*	ps;
 	int				ping;
 	char			state[32];
 
