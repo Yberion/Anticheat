@@ -302,5 +302,4 @@ void EslAnticheat_main(client_t* cl, usercmd_t* cmd, int packetIndex, int Sys_Mi
 	//EslAnticheat_UpdateAveragePingSinceConnected(cl, Sys_Milliseconds_);
 
 	//EslAnticheat_MonitorPackets(cl, Sys_Milliseconds_);
-
 }

@@ -1527,19 +1527,18 @@ void SV_WriteDemoMessage ( client_t *cl, msg_t *msg, int headerBytes ) {
 void SV_StopRecordDemo( client_t *cl ) {
 	int		len;
 
-	if ( !cl->demo.demorecording ) {
-		Com_Printf( "Client %d is not recording a demo.\n", cl - svs.clients );
-		return;
-	}
-
 	// finish up
 	len = -1;
+
 	FS_Write (&len, 4, cl->demo.demofile);
 	FS_Write (&len, 4, cl->demo.demofile);
+
 	FS_FCloseFile (cl->demo.demofile);
+
 	cl->demo.demofile = 0;
 	cl->demo.demorecording = qfalse;
-	if (com_developer->integer)
+
+	//if (com_developer->integer)
 		Com_Printf ("Stopped demo for client %d.\n", cl - svs.clients);
 }
 
@@ -1561,30 +1560,51 @@ SV_StopRecording_f
 stop recording a demo
 ====================
 */
-void SV_StopRecord_f( void ) {
+void SV_StopRecord_f(void) {
 	int		i;
 
-	client_t *cl = NULL;
-	if ( Cmd_Argc() == 2 ) {
-		int clIndex = atoi( Cmd_Argv( 1 ) );
-		if ( clIndex < 0 || clIndex >= sv_maxclients->integer ) {
-			Com_Printf( "Unknown client number %d.\n", clIndex );
-			return;
-		}
-		cl = &svs.clients[clIndex];
-	} else {
-		for (i = 0; i < sv_maxclients->integer; i++) {
-			if ( svs.clients[i].demo.demorecording ) {
-				cl = &svs.clients[i];
-				break;
-			}
-		}
-		if ( cl == NULL ) {
-			Com_Printf( "No demo being recorded.\n" );
-			return;
-		}
+	client_t* cl = NULL;
+
+	if (Cmd_Argc() != 2)
+	{
+		Com_Printf("svstoprecord <clientNum>\n");
+
+		return;
 	}
-	SV_StopRecordDemo( cl );
+
+	int clientNum = atoi(Cmd_Argv(1));
+
+	if (clientNum < 0 || clientNum >= sv_maxclients->integer)
+	{
+		Com_Printf("^3Invalid client number %i.^7\n", clientNum);
+
+		return;
+	}
+
+	cl = &svs.clients[clientNum];
+
+	if (cl - svs.clients >= sv_maxclients->integer)
+	{
+		Com_Printf("^3No active client could be found.^7\n");
+
+		return;
+	}
+
+	if (!cl->demo.demorecording)
+	{
+		Com_Printf("^3Client %i is not recording a demo.^7\n", cl - svs.clients);
+
+		return;
+	}
+
+	if (cl->state != CS_ACTIVE)
+	{
+		Com_Printf("^3Client %i is not active.^7\n", cl - svs.clients);
+
+		return;
+	}
+
+	SV_StopRecordDemo(cl);
 }
 
 /*
@@ -1634,74 +1654,66 @@ void SV_ListRecording_f(void) {
 SV_DemoFilename
 ==================
 */
-void SV_DemoFilename( char *buf, int bufSize ) {
+void SV_DemoFilename(char* buf, int bufSize) {
 	time_t rawtime;
-	char timeStr[32] = {0}; // should really only reach ~19 chars
+	char timeStr[32] = { 0 }; // should really only reach ~19 chars
 
-	time( &rawtime );
-	strftime( timeStr, sizeof( timeStr ), "%Y-%m-%d_%H-%M-%S", localtime( &rawtime ) ); // or gmtime
+	time(&rawtime);
+	strftime(timeStr, sizeof(timeStr), "%Y-%m-%d_%H-%M-%S", localtime(&rawtime)); // or gmtime
 
-	Com_sprintf( buf, bufSize, "demo%s", timeStr );
+	Com_sprintf(buf, bufSize, "demo%s", timeStr);
 }
 
 // defined in sv_client.cpp
 extern void SV_CreateClientGameStateMessage( client_t *client, msg_t* msg );
 
-void SV_RecordDemo( client_t *cl, char *demoName ) {
+void SV_RecordDemo(client_t* cl, char* demoName) {
 	char		name[MAX_OSPATH];
 	byte		bufData[MAX_MSGLEN];
 	msg_t		msg;
 	int			len;
 
-	if ( cl->demo.demorecording ) {
-		Com_Printf( "Already recording.\n" );
-		return;
-	}
-
-	if ( cl->state != CS_ACTIVE ) {
-		Com_Printf( "Client is not active.\n" );
-		return;
-	}
-
 	// open the demo file
-	Q_strncpyz( cl->demo.demoName, demoName, sizeof( cl->demo.demoName ) );
-	Com_sprintf( name, sizeof( name ), "demos/%s.dm_%d", cl->demo.demoName, PROTOCOL_VERSION ); //Should use DEMO_EXTENSION
+	Q_strncpyz(cl->demo.demoName, demoName, sizeof(cl->demo.demoName));
+	Com_sprintf(name, sizeof(name), "demos/%s.dm_%d", cl->demo.demoName, PROTOCOL_VERSION); //Should use DEMO_EXTENSION
 
+	//if (com_developer->integer) {
+	Com_Printf("Recording client %i to %s.\n", cl - svs.clients, name);
+	//}
 
-	if (com_developer->integer) {
-		Com_Printf("recording to %s.\n", name);
-	}
-	cl->demo.demofile = FS_FOpenFileWriteAsync( name );
-	if ( !cl->demo.demofile ) {
-		Com_Printf ("ERROR: couldn't open.\n");
+	cl->demo.demofile = FS_FOpenFileWriteAsync(name);
+
+	if (!cl->demo.demofile) {
+		Com_Printf("^1ERROR: couldn't open file : %s.^7\n", name);
 		return;
 	}
+
 	cl->demo.demorecording = qtrue;
 
 	// don't start saving messages until a non-delta compressed message is received
 	cl->demo.demowaiting = qtrue;
 
-	cl->demo.isBot = ( cl->netchan.remoteAddress.type == NA_BOT ) ? qtrue : qfalse;
+	cl->demo.isBot = (cl->netchan.remoteAddress.type == NA_BOT) ? qtrue : qfalse;
 	cl->demo.botReliableAcknowledge = cl->reliableSent;
 
 	// write out the gamestate message
-	MSG_Init( &msg, bufData, sizeof( bufData ) );
+	MSG_Init(&msg, bufData, sizeof(bufData));
 
 	// NOTE, MRE: all server->client messages now acknowledge
 	int tmp = cl->reliableSent;
-	SV_CreateClientGameStateMessage( cl, &msg );
+	SV_CreateClientGameStateMessage(cl, &msg);
 	cl->reliableSent = tmp;
 
 	// finished writing the client packet
-	MSG_WriteByte( &msg, svc_EOF );
+	MSG_WriteByte(&msg, svc_EOF);
 
 	// write it to the demo file
-	len = LittleLong( cl->netchan.outgoingSequence - 1 );
-	FS_Write( &len, 4, cl->demo.demofile );
+	len = LittleLong(cl->netchan.outgoingSequence - 1);
+	FS_Write(&len, 4, cl->demo.demofile);
 
-	len = LittleLong( msg.cursize );
-	FS_Write( &len, 4, cl->demo.demofile );
-	FS_Write( msg.data, msg.cursize, cl->demo.demofile );
+	len = LittleLong(msg.cursize);
+	FS_Write(&len, 4, cl->demo.demofile);
+	FS_Write(msg.data, msg.cursize, cl->demo.demofile);
 
 	// the rest of the demo file will be copied from net messages
 }
@@ -1717,26 +1729,40 @@ void SV_AutoRecordDemo( client_t *cl ) {
 	char demoPlayerName[MAX_NAME_LENGTH];
 	time_t rawtime;
 	struct tm * timeinfo;
-	time( &rawtime );
-	timeinfo = localtime( &rawtime );
-	strftime( date, sizeof( date ), "%Y-%m-%d_%H-%M-%S", timeinfo );
-	timeinfo = localtime( &sv.realMapTimeStarted );
-	strftime( folderDate, sizeof( folderDate ), "%Y-%m-%d_%H-%M-%S", timeinfo );
-	strftime( folderTreeDate, sizeof( folderTreeDate ), "%Y/%m/%d", timeinfo );
-	Q_strncpyz( demoPlayerName, cl->name, sizeof( demoPlayerName ) );
-	Q_CleanStr( demoPlayerName );
+
+	time(&rawtime);
+	timeinfo = localtime(&rawtime);
+
+	strftime(date, sizeof(date), "%Y-%m-%d_%H-%M-%S", timeinfo);
+
+	timeinfo = localtime(&sv.realMapTimeStarted);
+
+	strftime(folderDate, sizeof(folderDate), "%Y-%m-%d_%H-%M-%S", timeinfo);
+	strftime(folderTreeDate, sizeof(folderTreeDate), "%Y/%m/%d", timeinfo);
+
+	Q_strncpyz(demoPlayerName, cl->name, sizeof(demoPlayerName));
+	Q_CleanStr(demoPlayerName);
+	
 	if (sv_autoDemo->integer == 2)
-		Com_sprintf( demoFileName, sizeof( demoFileName ), "%s %s", Cvar_VariableString( "mapname" ), date );
+	{
+		Com_sprintf(demoFileName, sizeof(demoFileName), "%s %s", Cvar_VariableString("mapname"), date);
+	}
 	else
-	  Com_sprintf( demoFileName, sizeof( demoFileName ), "%d %s %s %s",
-			  cl - svs.clients, demoPlayerName, Cvar_VariableString( "mapname" ), date );
-	Com_sprintf( demoFolderName, sizeof( demoFolderName ), "%s %s", Cvar_VariableString( "mapname" ), folderDate );
+	{
+		Com_sprintf(demoFileName, sizeof(demoFileName), "%d %s %s %s", cl - svs.clients, demoPlayerName, Cvar_VariableString("mapname"), date);
+	}
+
+	Com_sprintf(demoFolderName, sizeof(demoFolderName), "%s %s", Cvar_VariableString("mapname"), folderDate);
+
 	// sanitize filename
-	for ( char **start = demoNames; start - demoNames < (ptrdiff_t)ARRAY_LEN( demoNames ); start++ ) {
+	for ( char **start = demoNames; start - demoNames < (ptrdiff_t)ARRAY_LEN( demoNames ); start++ )
+	{
 		Q_strstrip( *start, "\n\r;:.?*<>|\\/\"", NULL );
 	}
+
 	Com_sprintf( demoName, sizeof( demoName ), "autorecord/%s/%s/%s", folderTreeDate, demoFolderName, demoFileName );
-	SV_RecordDemo( cl, demoName );
+	
+	SV_RecordDemo(cl, demoName);
 }
 
 static time_t SV_ExtractTimeFromDemoFolder( char *folder ) {
@@ -1891,83 +1917,95 @@ void SV_BeginAutoRecordDemos() {
 }
 
 // code is a merge of the cl_main.cpp function of the same name and SV_SendClientGameState in sv_client.cpp
-static void SV_Record_f( void ) {
+static void SV_Record_f(void) {
 	char		demoName[MAX_OSPATH];
 	char		name[MAX_OSPATH];
 	int			i;
-	char		*s;
-	client_t	*cl;
+	char* s;
+	client_t* cl;
 	//int			len;
 
-	if ( svs.clients == NULL ) {
-		Com_Printf( "cannot record server demo - null svs.clients\n" );
+	if (svs.clients == NULL)
+	{
+		Com_Printf("^1ERROR: Cannot record server demo due to svs.clients being NULL^7\n");
+
 		return;
 	}
 
-	if ( Cmd_Argc() > 3 ) {
-		Com_Printf( "record <demoname> <clientnum>\n" );
+	if (Cmd_Argc() < 2 || Cmd_Argc() > 3)
+	{
+		Com_Printf("svrecord <clientNum> [demoName]\n");
+
 		return;
 	}
 
-	if ( Cmd_Argc() == 3 ) {
-		int clIndex = atoi( Cmd_Argv( 2 ) );
-		if ( clIndex < 0 || clIndex >= sv_maxclients->integer ) {
-			Com_Printf( "Unknown client number %d.\n", clIndex );
-			return;
-		}
-		cl = &svs.clients[clIndex];
-	} else {
-		for ( i=0, cl=svs.clients ; i < sv_maxclients->integer ; i++, cl++ )
-		{
-			if ( !cl->state )
-			{
-				continue;
-			}
+	int clientNum = atoi(Cmd_Argv(1));
 
-			if ( cl->demo.demorecording )
-			{
-				continue;
-			}
+	if (clientNum < 0 || clientNum >= sv_maxclients->integer)
+	{
+		Com_Printf("^3Invalid client number %d.^7\n", clientNum);
 
-			if ( cl->state == CS_ACTIVE )
-			{
-				break;
-			}
-		}
-	}
-
-	if (cl - svs.clients >= sv_maxclients->integer) {
-		Com_Printf( "No active client could be found.\n" );
 		return;
 	}
 
-	if ( cl->demo.demorecording ) {
-		Com_Printf( "Already recording.\n" );
+	cl = &svs.clients[clientNum];
+
+	if (cl - svs.clients >= sv_maxclients->integer)
+	{
+		Com_Printf("^3No active client could be found.^7\n");
+
 		return;
 	}
 
-	if ( cl->state != CS_ACTIVE ) {
-		Com_Printf( "Client is not active.\n" );
+	if (cl->demo.demorecording)
+	{
+		Com_Printf("^3Already recording client %i.^7\n", cl - svs.clients);
+
 		return;
 	}
 
-	if ( Cmd_Argc() >= 2 ) {
-		s = Cmd_Argv( 1 );
-		Q_strncpyz( demoName, s, sizeof( demoName ) );
-		Com_sprintf( name, sizeof( name ), "demos/%s.dm_%d", demoName, PROTOCOL_VERSION ); //Should use DEMO_EXTENSION
-	} else {
+	if (cl->state != CS_ACTIVE)
+	{
+		Com_Printf("^3Client %i is not active.^7\n", cl - svs.clients);
+
+		return;
+	}
+
+	if (Cmd_Argc() > 2)
+	{
+		s = Cmd_Argv(2);
+
+		Q_strncpyz(demoName, s, sizeof(demoName));
+	}
+	else
+	{
 		// timestamp the file
-		SV_DemoFilename( demoName, sizeof( demoName ) );
+		SV_DemoFilename(demoName, sizeof(demoName));
 
-		Com_sprintf (name, sizeof(name), "demos/%s.dm_%d", demoName, PROTOCOL_VERSION );
+		char demoPlayerName[MAX_NAME_LENGTH];
 
-		if ( FS_FileExists( name ) ) {
-			Com_Printf( "Record: Couldn't create a file\n");
-			return;
- 		}
+		Q_strncpyz(demoPlayerName, cl->name, sizeof(demoPlayerName));
+		Q_CleanStr(demoPlayerName);
+
+		// Also add the current client name
+		Q_strcat(demoName, sizeof(demoName), "_");
+		Q_strcat(demoName, sizeof(demoName), demoPlayerName);
 	}
 
-	SV_RecordDemo( cl, demoName );
+	Q_strstrip(demoName, "\n\r;:.?*<>|\\/\"", "");
+
+	//Should use DEMO_EXTENSION
+	Com_sprintf(name, sizeof(name), "demos/%s.dm_%d", demoName, PROTOCOL_VERSION);
+
+	// We don't want to erase any demo
+	if (FS_FileExists(name))
+	{
+		Com_Printf("^1ERROR: File already exists : %s\n", name);
+
+		return;
+	}
+
+	SV_RecordDemo(cl, demoName);
 }
 
 /*
@@ -2018,44 +2056,43 @@ void SV_AddOperatorCommands( void ) {
 	}
 	initialized = qtrue;
 
-	Cmd_AddCommand ("heartbeat", SV_Heartbeat_f, "Sends a heartbeat to the masterserver" );
-	Cmd_AddCommand ("kick", SV_Kick_f, "Kick a user from the server" );
-	Cmd_AddCommand ("kickbots", SV_KickBots_f, "Kick all bots from the server" );
-	Cmd_AddCommand ("kickall", SV_KickAll_f, "Kick all users from the server" );
-	Cmd_AddCommand ("kicknum", SV_KickNum_f, "Kick a user from the server by userid" );
-	Cmd_AddCommand ("clientkick", SV_KickNum_f, "Kick a user from the server by userid" );
-	Cmd_AddCommand ("status", SV_Status_f, "Prints status of server and connected clients" );
-	Cmd_AddCommand ("serverinfo", SV_Serverinfo_f, "Prints the serverinfo that is visible in the server browsers" );
-	Cmd_AddCommand ("systeminfo", SV_Systeminfo_f, "Prints the systeminfo variables that are replicated to clients" );
-	Cmd_AddCommand ("dumpuser", SV_DumpUser_f, "Prints the userinfo for a given userid" );
-	Cmd_AddCommand ("map_restart", SV_MapRestart_f, "Restart the current map" );
+	Cmd_AddCommand ("heartbeat", SV_Heartbeat_f, "Sends a heartbeat to the masterserver");
+	Cmd_AddCommand ("kick", SV_Kick_f, "Kick a user from the server");
+	Cmd_AddCommand ("kickbots", SV_KickBots_f, "Kick all bots from the server");
+	Cmd_AddCommand ("kickall", SV_KickAll_f, "Kick all users from the server");
+	Cmd_AddCommand ("kicknum", SV_KickNum_f, "Kick a user from the server by userid");
+	Cmd_AddCommand ("clientkick", SV_KickNum_f, "Kick a user from the server by userid");
+	Cmd_AddCommand ("status", SV_Status_f, "Prints status of server and connected clients");
+	Cmd_AddCommand ("serverinfo", SV_Serverinfo_f, "Prints the serverinfo that is visible in the server browsers");
+	Cmd_AddCommand ("systeminfo", SV_Systeminfo_f, "Prints the systeminfo variables that are replicated to clients");
+	Cmd_AddCommand ("dumpuser", SV_DumpUser_f, "Prints the userinfo for a given userid");
+	Cmd_AddCommand ("map_restart", SV_MapRestart_f, "Restart the current map");
 	Cmd_AddCommand ("sectorlist", SV_SectorList_f);
-	Cmd_AddCommand ("map", SV_Map_f, "Load a new map with cheats disabled" );
-	Cmd_SetCommandCompletionFunc( "map", SV_CompleteMapName );
-	Cmd_AddCommand ("devmap", SV_Map_f, "Load a new map with cheats enabled" );
-	Cmd_SetCommandCompletionFunc( "devmap", SV_CompleteMapName );
-//	Cmd_AddCommand ("devmapbsp", SV_Map_f);	// not used in MP codebase, no server BSP_cacheing
-	Cmd_AddCommand ("devmapmdl", SV_Map_f, "Load a new map with cheats enabled" );
-	Cmd_SetCommandCompletionFunc( "devmapmdl", SV_CompleteMapName );
-	Cmd_AddCommand ("devmapall", SV_Map_f, "Load a new map with cheats enabled" );
-	Cmd_SetCommandCompletionFunc( "devmapall", SV_CompleteMapName );
-	Cmd_AddCommand ("killserver", SV_KillServer_f, "Shuts the server down and disconnects all clients" );
-	Cmd_AddCommand ("svsay", SV_ConSay_f, "Broadcast server messages to clients" );
-	Cmd_AddCommand ("svtell", SV_ConTell_f, "Private message from the server to a user" );
-	Cmd_AddCommand ("forcetoggle", SV_ForceToggle_f, "Toggle g_forcePowerDisable bits" );
-	Cmd_AddCommand ("weapontoggle", SV_WeaponToggle_f, "Toggle g_weaponDisable bits" );
-	Cmd_AddCommand ("svrecord", SV_Record_f, "Record a server-side demo" );
-	Cmd_AddCommand ("svstoprecord", SV_StopRecord_f, "Stop recording a server-side demo" );
+	Cmd_AddCommand ("map", SV_Map_f, "Load a new map with cheats disabled");
+	Cmd_SetCommandCompletionFunc ("map", SV_CompleteMapName);
+	Cmd_AddCommand ("devmap", SV_Map_f, "Load a new map with cheats enabled");
+	Cmd_SetCommandCompletionFunc ("devmap", SV_CompleteMapName);
+	//	Cmd_AddCommand ("devmapbsp", SV_Map_f);	// not used in MP codebase, no server BSP_cacheing
+	Cmd_AddCommand ("devmapmdl", SV_Map_f, "Load a new map with cheats enabled");
+	Cmd_SetCommandCompletionFunc ("devmapmdl", SV_CompleteMapName);
+	Cmd_AddCommand ("devmapall", SV_Map_f, "Load a new map with cheats enabled");
+	Cmd_SetCommandCompletionFunc ("devmapall", SV_CompleteMapName);
+	Cmd_AddCommand ("killserver", SV_KillServer_f, "Shuts the server down and disconnects all clients");
+	Cmd_AddCommand ("svsay", SV_ConSay_f, "Broadcast server messages to clients");
+	Cmd_AddCommand ("svtell", SV_ConTell_f, "Private message from the server to a user");
+	Cmd_AddCommand ("forcetoggle", SV_ForceToggle_f, "Toggle g_forcePowerDisable bits");
+	Cmd_AddCommand ("weapontoggle", SV_WeaponToggle_f, "Toggle g_weaponDisable bits");
+	Cmd_AddCommand ("svrecord", SV_Record_f, "Record a server-side demo");
+	Cmd_AddCommand ("svstoprecord", SV_StopRecord_f, "Stop recording a server-side demo");
 	Cmd_AddCommand ("svrenamedemo", SV_RenameDemo_f, "Rename a server-side demo");
-	Cmd_AddCommand ("sv_rehashbans", SV_RehashBans_f, "Reloads banlist from file" );
-	Cmd_AddCommand ("sv_listbans", SV_ListBans_f, "Lists bans" );
-	Cmd_AddCommand( "sv_listrecording", SV_ListRecording_f, "Lists demos being recorded" );
-	Cmd_AddCommand ("sv_banaddr", SV_BanAddr_f, "Bans a user" );
-	Cmd_AddCommand ("sv_exceptaddr", SV_ExceptAddr_f, "Adds a ban exception for a user" );
-	Cmd_AddCommand ("sv_bandel", SV_BanDel_f, "Removes a ban" );
-	Cmd_AddCommand ("sv_exceptdel", SV_ExceptDel_f, "Removes a ban exception" );
-	Cmd_AddCommand ("sv_flushbans", SV_FlushBans_f, "Removes all bans and exceptions" );
-	Cmd_AddCommand ("whitelistip", SV_WhitelistIP_f, "Add IP to the whitelist" );
+	Cmd_AddCommand ("sv_rehashbans", SV_RehashBans_f, "Reloads banlist from file");
+	Cmd_AddCommand ("sv_listbans", SV_ListBans_f, "Lists bans");
+	Cmd_AddCommand ("sv_listrecording", SV_ListRecording_f, "Lists demos being recorded");
+	Cmd_AddCommand ("sv_banaddr", SV_BanAddr_f, "Bans a user");
+	Cmd_AddCommand ("sv_exceptaddr", SV_ExceptAddr_f, "Adds a ban exception for a user");
+	Cmd_AddCommand ("sv_bandel", SV_BanDel_f, "Removes a ban");
+	Cmd_AddCommand ("sv_exceptdel", SV_ExceptDel_f, "Removes a ban exception");
+	Cmd_AddCommand ("sv_flushbans", SV_FlushBans_f, "Removes all bans and exceptions");
 }
 
 /*
