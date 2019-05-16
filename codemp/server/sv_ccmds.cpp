@@ -1137,6 +1137,7 @@ static void SV_Status_f( void )
 	const char		*s;
 	int				ping;
 	char			state[32];
+	char			recording[8];
 
 	// make sure server is running
 	if ( !com_sv_running->integer ) {
@@ -1180,8 +1181,8 @@ static void SV_Status_f( void )
 	Com_Printf( "players : %i %s, %i %s(%i max)\n", humans, (humans == 1 ? "human" : "humans"), bots, (bots == 1 ? "bot" : "bots"), sv_maxclients->integer - sv_privateClients->integer );
 	Com_Printf( "uptime  : %s\n", SV_CalcUptime() );
 
-	Com_Printf("cl score ping rate  address                name \n");
-	Com_Printf("-- ----- ---- ----- ---------------------- ---------------\n");
+	Com_Printf("cl score ping rate   address                R name \n");
+	Com_Printf("-- ----- ---- ------ ---------------------- - ---------------\n");
 
 	for (i=0,cl=svs.clients ; i < sv_maxclients->integer ; i++,cl++) {
 		if ( !cl->state )
@@ -1199,8 +1200,19 @@ static void SV_Status_f( void )
 		ps = SV_GameClientNum( i );
 		s = NET_AdrToString( cl->netchan.remoteAddress );
 
-		Com_Printf("%2i %5i %s %5i %22s %s^7\n", i, ps->persistant[PERS_SCORE], state, cl->rate, s, cl->name);//No need for truncation "feature" if we move name to end
+		if (cl->demo.demorecording)
+		{
+			Q_strncpyz(recording, "^1*^7", sizeof(recording));
+		}
+		else
+		{
+			Q_strncpyz(recording, "", sizeof(recording));
+		}
+
+		//No need for truncation "feature" if we move name to end
+		Com_Printf("%2i %5i %4s %6i %22s %1s %s^7\n", i, ps->persistant[PERS_SCORE], state, cl->rate, s, recording, cl->name);
 	}
+
 	Com_Printf ("\n");
 }
 
@@ -1561,8 +1573,6 @@ stop recording a demo
 ====================
 */
 void SV_StopRecord_f(void) {
-	int		i;
-
 	client_t* cl = NULL;
 
 	if (Cmd_Argc() != 2)
@@ -1640,13 +1650,39 @@ list demos being recorded
 ====================
 */
 void SV_ListRecording_f(void) {
-	int i;
+	int				i;
+	int				ping;
+	char			state[32];
+	playerState_t	*ps;
+	client_t		*cl;
+
 	Com_Printf("Demos currently being recorded:\n");
-	for (i = 0; i < sv_maxclients->integer; i++) {
-		if (svs.clients[i].demo.demorecording) {
-			Com_Printf("Client %i (%s)\n", i, svs.clients[i].demo.demoName);
+
+	Com_Printf("cl score ping name \n");
+	Com_Printf("-- ----- ---- ---------------\n");
+
+	for (i = 0, cl = svs.clients; i < sv_maxclients->integer; i++, cl++)
+	{
+		if (!cl->demo.demorecording)
+		{
+			continue;
 		}
+
+		if (cl->state == CS_CONNECTED)
+			Q_strncpyz(state, "CON ", sizeof(state));
+		else if (cl->state == CS_ZOMBIE)
+			Q_strncpyz(state, "ZMB ", sizeof(state));
+		else {
+			ping = cl->ping < 9999 ? cl->ping : 9999;
+			Com_sprintf(state, sizeof(state), "%4i", ping);
+		}
+
+		ps = SV_GameClientNum(i);
+
+		Com_Printf("%2i %5i %4s %s^7 (%s)\n", i, ps->persistant[PERS_SCORE], state, cl->name, cl->demo.demoName);
 	}
+
+	Com_Printf("\n");
 }
 
 /*
@@ -1920,9 +1956,8 @@ void SV_BeginAutoRecordDemos() {
 static void SV_Record_f(void) {
 	char		demoName[MAX_OSPATH];
 	char		name[MAX_OSPATH];
-	int			i;
-	char* s;
-	client_t* cl;
+	char		*s;
+	client_t	*cl;
 	//int			len;
 
 	if (svs.clients == NULL)
@@ -2082,9 +2117,9 @@ void SV_AddOperatorCommands( void ) {
 	Cmd_AddCommand ("svtell", SV_ConTell_f, "Private message from the server to a user");
 	Cmd_AddCommand ("forcetoggle", SV_ForceToggle_f, "Toggle g_forcePowerDisable bits");
 	Cmd_AddCommand ("weapontoggle", SV_WeaponToggle_f, "Toggle g_weaponDisable bits");
-	Cmd_AddCommand ("svrecord", SV_Record_f, "Record a server-side demo");
-	Cmd_AddCommand ("svstoprecord", SV_StopRecord_f, "Stop recording a server-side demo");
-	Cmd_AddCommand ("svrenamedemo", SV_RenameDemo_f, "Rename a server-side demo");
+	Cmd_AddCommand ("sv_record", SV_Record_f, "Record a server-side demo");
+	Cmd_AddCommand ("sv_stoprecord", SV_StopRecord_f, "Stop recording a server-side demo");
+	Cmd_AddCommand ("sv_renamedemo", SV_RenameDemo_f, "Rename a server-side demo");
 	Cmd_AddCommand ("sv_rehashbans", SV_RehashBans_f, "Reloads banlist from file");
 	Cmd_AddCommand ("sv_listbans", SV_ListBans_f, "Lists bans");
 	Cmd_AddCommand ("sv_listrecording", SV_ListRecording_f, "Lists demos being recorded");
