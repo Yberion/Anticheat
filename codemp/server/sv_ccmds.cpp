@@ -1577,7 +1577,7 @@ void SV_StopRecord_f(void) {
 
 	if (Cmd_Argc() != 2)
 	{
-		Com_Printf("svstoprecord <clientNum>\n");
+		Com_Printf("sv_stoprecord <clientNum>\n");
 
 		return;
 	}
@@ -1617,6 +1617,34 @@ void SV_StopRecord_f(void) {
 	SV_StopRecordDemo(cl);
 }
 
+void SV_StopAllRecord_f(void) {
+	int				i;
+	client_t		*cl;
+	int				nbDemoStopped = 0;
+
+	for (i = 0, cl = svs.clients; i < sv_maxclients->integer; i++, cl++)
+	{
+		if (cl->state != CS_ACTIVE)
+		{
+			continue;
+		}
+
+		if (!cl->demo.demorecording)
+		{
+			continue;
+		}
+
+		SV_StopRecordDemo(cl);
+
+		nbDemoStopped++;
+	}
+
+	if (nbDemoStopped < 1)
+	{
+		Com_Printf("^3No client recording.^7\n");
+	}
+}
+
 /*
 ====================
 SV_RenameDemo_f
@@ -1629,6 +1657,8 @@ void SV_RenameDemo_f(void) {
 	char		to[MAX_OSPATH];
 
 	if (Cmd_Argc() != 3) {
+		Com_Printf("sv_renamedemo <from> <to>\n");
+
 		return;
 	}
 
@@ -1640,6 +1670,8 @@ void SV_RenameDemo_f(void) {
 	}
 
 	FS_Rename(from, to);
+
+	Com_Printf("Demo \"%s\" renamed to \"%s\".\n", from, to);
 }
 
 /*
@@ -1714,7 +1746,7 @@ void SV_RecordDemo(client_t* cl, char* demoName) {
 	Com_sprintf(name, sizeof(name), "demos/%s.dm_%d", cl->demo.demoName, PROTOCOL_VERSION); //Should use DEMO_EXTENSION
 
 	//if (com_developer->integer) {
-	Com_Printf("Recording client %i to %s.\n", cl - svs.clients, name);
+	Com_Printf("Recording client %i to %s.\n", cl - svs.clients, cl->demo.demoName);
 	//}
 
 	cl->demo.demofile = FS_FOpenFileWriteAsync(name);
@@ -1958,7 +1990,6 @@ static void SV_Record_f(void) {
 	char		name[MAX_OSPATH];
 	char		*s;
 	client_t	*cl;
-	//int			len;
 
 	if (svs.clients == NULL)
 	{
@@ -1969,7 +2000,7 @@ static void SV_Record_f(void) {
 
 	if (Cmd_Argc() < 2 || Cmd_Argc() > 3)
 	{
-		Com_Printf("svrecord <clientNum> [demoName]\n");
+		Com_Printf("sv_record <clientNum> [demoName]\n");
 
 		return;
 	}
@@ -2066,6 +2097,110 @@ static void SV_WhitelistIP_f( void ) {
 	}
 }
 
+static void SV_RecordInGamePlayers_f(void) {
+	char			demoPrefix[32];
+	char			demoPlayerName[MAX_NAME_LENGTH];
+	char			demoName[MAX_OSPATH];
+	char			name[MAX_OSPATH];
+	char			buffer[4];
+	client_t		*cl;
+	int				i;
+	int				ingamePlayerCount = 0;
+	playerState_t	*ps;
+
+	if (svs.clients == NULL)
+	{
+		Com_Printf("^1ERROR: Cannot record server demo due to svs.clients being NULL^7\n");
+
+		return;
+	}
+
+	if (Cmd_Argc() > 2)
+	{
+		Com_Printf("sv_recordingameplayers [demoPrefix]\n");
+
+		return;
+	}
+
+	if (Cmd_Argc() == 2)
+	{
+		Q_strncpyz(demoPrefix, Cmd_Argv(1), sizeof(demoPrefix));
+	}
+
+	for (i = 0, cl = svs.clients; i < sv_maxclients->integer; i++, cl++)
+	{
+		if (cl->state != CS_ACTIVE)
+		{
+			continue;
+		}
+
+		if (cl->demo.demorecording)
+		{
+			Com_Printf("^3Already recording client %i.^7\n", cl - svs.clients);
+
+			continue;
+		}
+
+		ps = SV_GameClientNum(i);
+
+		// Don't record spectators
+		if (ps->pm_type == PM_SPECTATOR || ps->pm_flags & PMF_FOLLOW)
+		{
+			continue;
+		}
+
+		// Don't record bots
+		if (cl->netchan.remoteAddress.type == NA_BOT)
+		{
+			continue;
+		}
+
+		// timestamp the file
+		SV_DemoFilename(demoName, sizeof(demoName));
+
+		Q_strncpyz(demoPlayerName, cl->name, sizeof(demoPlayerName));
+		Q_CleanStr(demoPlayerName);
+
+		// Add the prefix after the timestamp
+		if (Cmd_Argc() == 2)
+		{
+			Q_strcat(demoName, sizeof(demoName), "_");
+			Q_strcat(demoName, sizeof(demoName), demoPrefix);
+		}
+
+		// Also add the current client name
+		Q_strcat(demoName, sizeof(demoName), "_");
+		Q_strcat(demoName, sizeof(demoName), demoPlayerName);
+
+		// Add client number in case of duplicated name
+		Q_strcat(demoName, sizeof(demoName), "_");
+		Com_sprintf(buffer, sizeof(buffer), "%i", i);
+		Q_strcat(demoName, sizeof(demoName), buffer);
+
+		Q_strstrip(demoName, "\n\r;:.?*<>|\\/\"", "");
+
+		//Should use DEMO_EXTENSION
+		Com_sprintf(name, sizeof(name), "demos/%s.dm_%d", demoName, PROTOCOL_VERSION);
+
+		// We don't want to erase any demo
+		if (FS_FileExists(name))
+		{
+			Com_Printf("^1ERROR: File already exists : %s\n", name);
+
+			continue;
+		}
+
+		SV_RecordDemo(cl, demoName);
+
+		ingamePlayerCount++;
+	}
+
+	if (ingamePlayerCount < 1)
+	{
+		Com_Printf("^3No player to record.^7\n", cl - svs.clients);
+	}
+}
+
 //===========================================================
 
 /*
@@ -2118,7 +2253,9 @@ void SV_AddOperatorCommands( void ) {
 	Cmd_AddCommand ("forcetoggle", SV_ForceToggle_f, "Toggle g_forcePowerDisable bits");
 	Cmd_AddCommand ("weapontoggle", SV_WeaponToggle_f, "Toggle g_weaponDisable bits");
 	Cmd_AddCommand ("sv_record", SV_Record_f, "Record a server-side demo");
+	Cmd_AddCommand ("sv_recordingameplayers", SV_RecordInGamePlayers_f, "Record a server-side demo from everyone in game");
 	Cmd_AddCommand ("sv_stoprecord", SV_StopRecord_f, "Stop recording a server-side demo");
+	Cmd_AddCommand ("sv_stopallrecord", SV_StopAllRecord_f, "Stop recording all server-side demo");
 	Cmd_AddCommand ("sv_renamedemo", SV_RenameDemo_f, "Rename a server-side demo");
 	Cmd_AddCommand ("sv_rehashbans", SV_RehashBans_f, "Reloads banlist from file");
 	Cmd_AddCommand ("sv_listbans", SV_ListBans_f, "Lists bans");
