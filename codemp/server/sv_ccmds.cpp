@@ -1624,6 +1624,11 @@ void SV_StopAllRecord_f(void) {
 
 	for (i = 0, cl = svs.clients; i < sv_maxclients->integer; i++, cl++)
 	{
+		if (!cl->state)
+		{
+			continue;
+		}
+
 		if (cl->state != CS_ACTIVE)
 		{
 			continue;
@@ -1700,14 +1705,8 @@ void SV_ListRecording_f(void) {
 			continue;
 		}
 
-		if (cl->state == CS_CONNECTED)
-			Q_strncpyz(state, "CON ", sizeof(state));
-		else if (cl->state == CS_ZOMBIE)
-			Q_strncpyz(state, "ZMB ", sizeof(state));
-		else {
-			ping = cl->ping < 9999 ? cl->ping : 9999;
-			Com_sprintf(state, sizeof(state), "%4i", ping);
-		}
+		ping = cl->ping < 9999 ? cl->ping : 9999;
+		Com_sprintf(state, sizeof(state), "%4i", ping);
 
 		ps = SV_GameClientNum(i);
 
