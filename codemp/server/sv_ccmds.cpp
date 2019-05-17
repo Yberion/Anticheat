@@ -1575,6 +1575,12 @@ stop recording a demo
 void SV_StopRecord_f(void) {
 	client_t* cl = NULL;
 
+	// make sure server is running
+	if (!com_sv_running->integer) {
+		Com_Printf("Server is not running.\n");
+		return;
+	}
+
 	if (Cmd_Argc() != 2)
 	{
 		Com_Printf("sv_stoprecord <clientNum>\n");
@@ -1621,6 +1627,12 @@ void SV_StopAllRecord_f(void) {
 	int				i;
 	client_t		*cl;
 	int				nbDemoStopped = 0;
+
+	// make sure server is running
+	if (!com_sv_running->integer) {
+		Com_Printf("Server is not running.\n");
+		return;
+	}
 
 	for (i = 0, cl = svs.clients; i < sv_maxclients->integer; i++, cl++)
 	{
