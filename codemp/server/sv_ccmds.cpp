@@ -1661,6 +1661,12 @@ void SV_RenameDemo_f(void) {
 	char		from[MAX_OSPATH];
 	char		to[MAX_OSPATH];
 
+	// make sure server is running
+	if (!com_sv_running->integer) {
+		Com_Printf("Server is not running.\n");
+		return;
+	}
+
 	if (Cmd_Argc() != 3) {
 		Com_Printf("sv_renamedemo <from> <to>\n");
 
@@ -1692,6 +1698,12 @@ void SV_ListRecording_f(void) {
 	char			state[32];
 	playerState_t	*ps;
 	client_t		*cl;
+
+	// make sure server is running
+	if (!com_sv_running->integer) {
+		Com_Printf("Server is not running.\n");
+		return;
+	}
 
 	Com_Printf("Demos currently being recorded:\n");
 
@@ -1990,6 +2002,12 @@ static void SV_Record_f(void) {
 	char		*s;
 	client_t	*cl;
 
+	// make sure server is running
+	if (!com_sv_running->integer) {
+		Com_Printf("Server is not running.\n");
+		return;
+	}
+
 	if (svs.clients == NULL)
 	{
 		Com_Printf("^1ERROR: Cannot record server demo due to svs.clients being NULL^7\n");
@@ -2106,6 +2124,12 @@ static void SV_RecordInGamePlayers_f(void) {
 	int				i;
 	int				ingamePlayerCount = 0;
 	playerState_t	*ps;
+
+	// make sure server is running
+	if (!com_sv_running->integer) {
+		Com_Printf("Server is not running.\n");
+		return;
+	}
 
 	if (svs.clients == NULL)
 	{
