@@ -1153,7 +1153,7 @@ SV_ClientCleanName
 Gamecode to engine port (from OpenJK)
 ============
 */
-static void SV_ClientCleanName(const char* in, char* out, int outSize)
+void SV_ClientCleanName(const char* in, char* out, int outSize)
 {
 	int outpos = 0, colorlessLen = 0;
 
@@ -1238,7 +1238,7 @@ void SV_UserinfoChanged( client_t *cl ) {
 	if (sv_legacyFixes->integer && !(sv_legacyFixes->integer & SVFIXES_ALLOW_INVALID_PLAYER_NAMES) &&
 		svs.servermod != SVMOD_JAPLUS && svs.servermod != SVMOD_MBII && svs.servermod != SVMOD_JAPRO)
 	{
-		char	cleanName[64];
+		char	cleanName[MAX_NETNAME];
 		
 		val = Info_ValueForKey(cl->userinfo, "name");
 

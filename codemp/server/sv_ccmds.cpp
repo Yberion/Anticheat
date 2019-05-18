@@ -2310,6 +2310,67 @@ static void SV_RecordInGamePlayers_f(void) {
 	}
 }
 
+/*
+=================
+SV_WhitelistIP_f
+=================
+*/
+static void SV_WhitelistIP_f( void ) {
+	if ( Cmd_Argc() < 2 ) {
+		Com_Printf ("Usage: whitelistip <ip>...\n");
+		return;
+	}
+
+	for ( int i = 1; i < Cmd_Argc(); i++ ) {
+		netadr_t	adr;
+
+		if ( NET_StringToAdr( Cmd_Argv(i), &adr ) ) {
+			SVC_WhitelistAdr( adr );
+			Com_Printf("Added %s to the IP whitelist\n", NET_AdrToString(adr));
+		} else {
+			Com_Printf("Incorrect IP address: %s\n", Cmd_Argv(i));
+		}
+	}
+}
+
+/*
+=================
+SV_ClientRename_f
+=================
+*/
+static void SV_ClientRename_f(void) {
+	client_t* cl;
+
+	// make sure server is running
+	if (!com_sv_running->integer) {
+		Com_Printf("Server is not running.\n");
+		return;
+	}
+
+	if (Cmd_Argc() < 3) {
+		Com_Printf("Usage: %s <client number> <name>\n", Cmd_Argv(0));
+		return;
+	}
+
+	cl = SV_GetPlayerByNum();
+
+	if (!cl) {
+		return;
+	}
+
+	char	newName[MAX_NETNAME];
+	char	cleanName[MAX_NETNAME];
+
+	Q_strncpyz(newName, Cmd_ArgsFrom(2), sizeof(newName));
+
+	SV_ClientCleanName(newName, cleanName, sizeof(cleanName));
+	Info_SetValueForKey(cl->userinfo, "name", cleanName);
+	Q_strncpyz(cl->name, cleanName, sizeof(cl->name));
+
+	// call prog code to allow overrides
+	GVM_ClientUserinfoChanged(cl - svs.clients);
+}
+
 //===========================================================
 
 /*
@@ -2374,6 +2435,8 @@ void SV_AddOperatorCommands( void ) {
 	Cmd_AddCommand ("sv_bandel", SV_BanDel_f, "Removes a ban");
 	Cmd_AddCommand ("sv_exceptdel", SV_ExceptDel_f, "Removes a ban exception");
 	Cmd_AddCommand ("sv_flushbans", SV_FlushBans_f, "Removes all bans and exceptions");
+	Cmd_AddCommand ("whitelistip", SV_WhitelistIP_f, "Add IP to the whitelist" );
+	Cmd_AddCommand ("sv_clientrename", SV_ClientRename_f, "Rename a user");
 }
 
 /*
