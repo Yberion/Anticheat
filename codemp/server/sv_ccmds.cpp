@@ -434,8 +434,8 @@ static void SV_Kick_f( void ) {
 		return;
 	}
 
-	if ( Cmd_Argc() != 2 ) {
-		Com_Printf ("Usage: kick <player name>\nkick all = kick everyone\nkick allbots = kick all bots\n");
+	if ( Cmd_Argc() < 2 ) {
+		Com_Printf ("Usage: kick <player name> [message]\nkick all [message] = kick everyone\nkick allbots = kick all bots\n");
 		return;
 	}
 
@@ -445,6 +445,7 @@ static void SV_Kick_f( void ) {
 	}
 
 	cl = SV_GetPlayerByHandle();
+	
 	if ( !cl ) {
 		if ( !Q_stricmp(Cmd_Argv(1), "all") ) {
 			for ( i=0, cl=svs.clients ; i < sv_maxclients->integer ; i++,cl++ ) {
@@ -454,7 +455,25 @@ static void SV_Kick_f( void ) {
 				if( cl->netchan.remoteAddress.type == NA_LOOPBACK ) {
 					continue;
 				}
-				SV_DropClient( cl, SV_GetStringEdString("MP_SVGAME","WAS_KICKED"));	// "was kicked" );
+
+				if (Cmd_Argc() >= 3)
+				{
+					// The client can only display 256 char anyway
+					char reason[256];
+
+					reason[0] = 0;
+
+					Q_strcat(reason, sizeof(reason), SV_GetStringEdString("MP_SVGAME", "WAS_KICKED"));
+					Q_strcat(reason, sizeof(reason), "\n");
+					Q_strcat(reason, sizeof(reason), Cmd_ArgsFrom(2));
+
+					SV_DropClient(cl, reason);
+				}
+				else
+				{
+					SV_DropClient(cl, SV_GetStringEdString("MP_SVGAME", "WAS_KICKED"));
+				}
+
 				cl->lastPacketTime = svs.time;	// in case there is a funny zombie
 			}
 		}
@@ -487,12 +506,30 @@ static void SV_Kick_f( void ) {
 		}
 		return;
 	}
+
 	if( cl->netchan.remoteAddress.type == NA_LOOPBACK ) {
 		Com_Printf("Cannot kick host player\n");
 		return;
 	}
 
-	SV_DropClient( cl, SV_GetStringEdString("MP_SVGAME","WAS_KICKED"));	// "was kicked" );
+	if (Cmd_Argc() >= 3)
+	{
+		// The client can only display 256 char anyway
+		char reason[256];
+
+		reason[0] = 0;
+
+		Q_strcat(reason, sizeof(reason), SV_GetStringEdString("MP_SVGAME", "WAS_KICKED"));
+		Q_strcat(reason, sizeof(reason), "\n");
+		Q_strcat(reason, sizeof(reason), Cmd_ArgsFrom(2));
+
+		SV_DropClient(cl, reason);
+	}
+	else
+	{
+		SV_DropClient(cl, SV_GetStringEdString("MP_SVGAME", "WAS_KICKED"));
+	}
+
 	cl->lastPacketTime = svs.time;	// in case there is a funny zombie
 }
 
@@ -552,7 +589,24 @@ static void SV_KickAll_f( void ) {
 			continue;
 		}
 
-		SV_DropClient( cl, SV_GetStringEdString("MP_SVGAME","WAS_KICKED"));	// "was kicked" );
+		if (Cmd_Argc() >= 2)
+		{
+			// The client can only display 256 char anyway
+			char reason[256];
+
+			reason[0] = 0;
+
+			Q_strcat(reason, sizeof(reason), SV_GetStringEdString("MP_SVGAME", "WAS_KICKED"));
+			Q_strcat(reason, sizeof(reason), "\n");
+			Q_strcat(reason, sizeof(reason), Cmd_ArgsFrom(1));
+
+			SV_DropClient(cl, reason);
+		}
+		else
+		{
+			SV_DropClient(cl, SV_GetStringEdString("MP_SVGAME", "WAS_KICKED"));
+		}
+
 		cl->lastPacketTime = svs.time; // in case there is a funny zombie
 	}
 }
@@ -573,21 +627,41 @@ static void SV_KickNum_f( void ) {
 		return;
 	}
 
-	if ( Cmd_Argc() != 2 ) {
-		Com_Printf ("Usage: %s <client number>\n", Cmd_Argv(0));
+	if ( Cmd_Argc() < 2 ) {
+		Com_Printf ("Usage: %s <client number> [message]\n", Cmd_Argv(0));
 		return;
 	}
 
 	cl = SV_GetPlayerByNum();
+
 	if ( !cl ) {
 		return;
 	}
+
 	if( cl->netchan.remoteAddress.type == NA_LOOPBACK ) {
 		Com_Printf("Cannot kick host player\n");
 		return;
 	}
 
-	SV_DropClient( cl, SV_GetStringEdString("MP_SVGAME","WAS_KICKED"));	// "was kicked" );
+	if (Cmd_Argc() >= 3)
+	{
+		// The client can only display 256 char anyway
+		char reason[256];
+
+		reason[0] = 0;
+
+		Q_strcat(reason, sizeof(reason), SV_GetStringEdString("MP_SVGAME", "WAS_KICKED"));
+		Q_strcat(reason, sizeof(reason), "\n");
+		Q_strcat(reason, sizeof(reason), Cmd_ArgsFrom(2));
+
+		SV_DropClient(cl, reason);
+	}
+	else
+	{
+		SV_DropClient(cl, SV_GetStringEdString("MP_SVGAME", "WAS_KICKED"));
+	}
+
+	//SV_DropClient( cl, SV_GetStringEdString("MP_SVGAME","WAS_KICKED"));	// "was kicked");
 	cl->lastPacketTime = svs.time;	// in case there is a funny zombie
 }
 
