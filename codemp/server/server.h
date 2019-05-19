@@ -234,6 +234,9 @@ typedef struct client_s {
 	qboolean		disableDuelCull;
 #endif
 
+	int				lastTimeDice;
+	int				lastTimeDiceCheck;
+
     // EslAnticheat -------------->
     clientEslAnticheat_t   eslAnticheat;
     // EslAnticheat <--------------
@@ -349,6 +352,8 @@ extern	cvar_t	*sv_hibernateFPS;
 #ifdef DEDICATED
 extern	cvar_t	*sv_antiDST;
 #endif
+
+extern	cvar_t *sv_diceDelay;
 
 // EslAnticheat -------------->
 extern	cvar_t* sv_eslAnticheat_packetsIngameDelayBeforeWarnings;

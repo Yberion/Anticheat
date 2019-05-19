@@ -1460,6 +1460,46 @@ static void SV_UpdateUserinfo_f( client_t *cl ) {
 	GVM_ClientUserinfoChanged( cl - svs.clients );
 }
 
+/*
+==================
+SV_DiceSystem_f
+==================
+*/
+static void SV_DiceSystem_f(client_t* cl) {
+	
+	if (cl->lastTimeDiceCheck + 1000 > svs.time)
+	{
+		return;
+	}
+
+	cl->lastTimeDiceCheck = svs.time;
+
+	int diceDelay = cl->lastTimeDice + sv_diceDelay->integer * 1000;
+
+	if (diceDelay > svs.time && cl->lastTimeDice > 0)
+	{
+		SV_SendServerCommand(cl, "print \"Wait %.2f seconds before the next dice.\n\"", (diceDelay - svs.time) / (float)1000);
+
+		return;
+	}
+
+	playerState_t *ps;
+
+	ps = SV_GameClientNum(cl - svs.clients);
+
+	// Don't allow spectators to roll dice
+	if (ps->pm_type == PM_SPECTATOR || ps->pm_flags & PMF_FOLLOW)
+	{
+		SV_SendServerCommand(cl, "print \"You need to be in game to roll a dice.\n\"");
+
+		return;
+	}
+
+	SV_SendServerCommand(NULL, "chat \"^3(Dice system) %s^3 scored ^7%i\"", cl->name, Q_irand(1, 100));
+
+	cl->lastTimeDice = svs.time;
+}
+
 typedef struct ucmd_s {
 	const char	*name;
 	void	(*func)( client_t *cl );
@@ -1476,6 +1516,7 @@ static ucmd_t ucmds[] = {
 	{"donedl",			SV_DoneDownload_f},
 	{"netstatus",		EslAnticheat_NetStatus_f},
 	{"shownet",			EslAnticheat_NetStatus_f}, //EternalJK client
+	{"dice",			SV_DiceSystem_f},
 
 	{NULL, NULL}
 };

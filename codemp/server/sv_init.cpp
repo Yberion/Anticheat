@@ -1031,6 +1031,8 @@ void SV_Init (void) {
 	sv_antiDST = Cvar_Get("sv_antiDST", "1", CVAR_NONE, "Attempts to detect and kick players injecting or using DST");
 #endif
 
+	sv_diceDelay = Cvar_Get("sv_diceDelay", "60", CVAR_NONE, "Delay between each dice");
+
     // EslAnticheat -------------->
     sv_eslAnticheat_packetsIngameDelayBeforeWarnings = Cvar_Get("sv_packetsIngameDelayBeforeWarnings", "2", CVAR_NONE);
     sv_eslAnticheat_packetsIngameDelayBetweenWarnings = Cvar_Get("sv_packetsIngameDelayBetweenWarnings", "5", CVAR_NONE);

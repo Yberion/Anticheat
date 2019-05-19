@@ -86,14 +86,13 @@ void EslAnticheat_NetStatus_f(client_t* client)
 {
 	if (client->eslAnticheat.lastTimeNetStatus + 500 > svs.time)
 	{
-
 		return;
 	}
 
-	char     status[4048];
+	char			status[4096];
 	int				i;
-	client_t* cl;
-	playerState_t*	ps;
+	client_t		*cl;
+	playerState_t	*ps;
 	int				ping;
 	char			state[32];
 

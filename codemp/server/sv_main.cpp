@@ -83,6 +83,8 @@ cvar_t	*sv_hibernateFPS;
 cvar_t	*sv_antiDST;
 #endif
 
+cvar_t *sv_diceDelay;
+
 // EslAnticheat -------------->
 cvar_t  *sv_eslAnticheat_packetsIngameDelayBeforeWarnings;
 cvar_t  *sv_eslAnticheat_packetsIngameDelayBetweenWarnings;
@@ -762,7 +764,7 @@ void SV_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 
 		if (SVC_RateLimitAddress(from, burst, period, now)) {
 			if (com_developer && com_developer->integer) {
-				Com_Printf("SV_ConnectionlessPacket: Rate limit from %s exceeded, dropping request\n", NET_AdrToString(from));
+				Com_Printf("SV_ConnectionlessPacket: Rate limit from %s exceeded, dropping request \"%s\"\n", NET_AdrToString(from), Cmd_Argv(0));
 			}
 			return;
 		}
@@ -783,7 +785,7 @@ void SV_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 	}
 
 	if (dropped > 0 && lastMsg + 5000 < now) {
-		Com_Printf("SV_ConnectionlessPacket: Rate limit exceeded, dropped %d requests\n", dropped);
+		Com_Printf("SV_ConnectionlessPacket: Rate limit exceeded, dropped %d requests \"%s\"\n", dropped, Cmd_Argv(0));
 		dropped = 0;
 		lastMsg = now;
 	}
