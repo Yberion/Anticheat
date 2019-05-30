@@ -236,6 +236,7 @@ typedef struct client_s {
 
 	int				lastTimeDice;
 	int				lastTimeDiceCheck;
+	int				numberOfDicesRolled;
 
     // EslAnticheat -------------->
     clientEslAnticheat_t   eslAnticheat;
@@ -353,7 +354,9 @@ extern	cvar_t	*sv_hibernateFPS;
 extern	cvar_t	*sv_antiDST;
 #endif
 
+extern	cvar_t *sv_enableDiceSystem;
 extern	cvar_t *sv_diceDelay;
+extern	cvar_t *sv_diceNumber;
 
 // EslAnticheat -------------->
 extern	cvar_t* sv_eslAnticheat_packetsIngameDelayBeforeWarnings;

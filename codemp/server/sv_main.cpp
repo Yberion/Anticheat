@@ -83,7 +83,9 @@ cvar_t	*sv_hibernateFPS;
 cvar_t	*sv_antiDST;
 #endif
 
+cvar_t *sv_enableDiceSystem;
 cvar_t *sv_diceDelay;
+cvar_t* sv_diceNumber;
 
 // EslAnticheat -------------->
 cvar_t  *sv_eslAnticheat_packetsIngameDelayBeforeWarnings;

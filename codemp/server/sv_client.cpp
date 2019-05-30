@@ -602,6 +602,9 @@ void SV_ClientEnterWorld( client_t *client, usercmd_t *cmd ) {
 	client->lastUserInfoChange = 0; //reset the delay
 	client->lastUserInfoCount = 0; //reset the count
 
+	client->lastTimeDice = 0; //reset dice delay
+	client->numberOfDicesRolled = 0; //reset number of dices rolled
+
     // EslAnticheat -------------->
     client->eslAnticheat.inGameTime = 0; // reset in game time
     // EslAnticheat <--------------
@@ -1465,8 +1468,8 @@ static void SV_UpdateUserinfo_f( client_t *cl ) {
 SV_DiceSystem_f
 ==================
 */
-static void SV_DiceSystem_f(client_t* cl) {
-	
+static void SV_DiceSystem_f(client_t* cl)
+{
 	if (cl->lastTimeDiceCheck + 1000 > svs.time)
 	{
 		return;
@@ -1474,11 +1477,25 @@ static void SV_DiceSystem_f(client_t* cl) {
 
 	cl->lastTimeDiceCheck = svs.time;
 
+	if (sv_enableDiceSystem->integer < 1)
+	{
+		SV_SendServerCommand(cl, "print \"^3Dice system disabled.^7\n\"");
+
+		return;
+	}
+
+	if (cl->numberOfDicesRolled >= sv_diceNumber->integer)
+	{
+		SV_SendServerCommand(cl, "print \"^3You rolled the dice the maximum of times allowed (%i).^7\n\"", sv_diceNumber->integer);
+
+		return;
+	}
+
 	int diceDelay = cl->lastTimeDice + sv_diceDelay->integer * 1000;
 
 	if (diceDelay > svs.time && cl->lastTimeDice > 0)
 	{
-		SV_SendServerCommand(cl, "print \"Wait %.2f seconds before the next dice.\n\"", (diceDelay - svs.time) / (float)1000);
+		SV_SendServerCommand(cl, "print \"^3Wait ^7%.2f^3 seconds before the next roll.^7\n\"", (diceDelay - svs.time) / (float)1000);
 
 		return;
 	}
@@ -1490,13 +1507,14 @@ static void SV_DiceSystem_f(client_t* cl) {
 	// Don't allow spectators to roll dice
 	if (ps->pm_type == PM_SPECTATOR || ps->pm_flags & PMF_FOLLOW)
 	{
-		SV_SendServerCommand(cl, "print \"You need to be in game to roll a dice.\n\"");
+		SV_SendServerCommand(cl, "print \"^3You need to be in game to roll a dice.^7\n\"");
 
 		return;
 	}
 
 	SV_SendServerCommand(NULL, "chat \"^3(Dice system) %s^3 scored ^7%i\"", cl->name, Q_irand(1, 100));
-
+	
+	cl->numberOfDicesRolled++;
 	cl->lastTimeDice = svs.time;
 }
 

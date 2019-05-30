@@ -1031,7 +1031,9 @@ void SV_Init (void) {
 	sv_antiDST = Cvar_Get("sv_antiDST", "1", CVAR_NONE, "Attempts to detect and kick players injecting or using DST");
 #endif
 
+	sv_enableDiceSystem = Cvar_Get("sv_enableDiceSystem", "1", CVAR_NONE, "Enable dice system");
 	sv_diceDelay = Cvar_Get("sv_diceDelay", "60", CVAR_NONE, "Delay between each dice");
+	sv_diceNumber = Cvar_Get("sv_diceNumber", "3", CVAR_NONE, "Number of times you can roll the dice per round");
 
     // EslAnticheat -------------->
     sv_eslAnticheat_packetsIngameDelayBeforeWarnings = Cvar_Get("sv_packetsIngameDelayBeforeWarnings", "2", CVAR_NONE);
