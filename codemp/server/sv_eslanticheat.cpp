@@ -189,7 +189,7 @@ static void EslAnticheat_CalcTimenudge(client_t* cl, int Sys_Milliseconds_)
 
 static void EslAnticheat_UpdateAveragePingSinceConnected(client_t* cl, int Sys_Milliseconds_)
 {
-	// Only start to update after 10 seconds being on the server to have stabilized the ping
+	// Only start to update after 10 seconds being on the server to have a stabilized the ping
 	if (svs.time - cl->lastConnectTime <= 10000)
 	{
 		return;

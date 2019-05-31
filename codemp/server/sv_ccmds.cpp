@@ -2371,6 +2371,82 @@ static void SV_ClientRename_f(void) {
 	GVM_ClientUserinfoChanged(cl - svs.clients);
 }
 
+/*
+=================
+SV_ClientMute_f
+=================
+*/
+static void SV_ClientMute_f(void) {
+	client_t* cl;
+
+	// make sure server is running
+	if (!com_sv_running->integer) {
+		Com_Printf("Server is not running.\n");
+		return;
+	}
+
+	if (Cmd_Argc() < 2) {
+		Com_Printf("Usage: %s <client number>\n", Cmd_Argv(0));
+		return;
+	}
+
+	cl = SV_GetPlayerByNum();
+
+	if (!cl) {
+		return;
+	}
+
+	if (cl->isMutedAllChat)
+	{
+		Com_Printf("^3Player ^7%s^3 already muted.^7\n", cl->name);
+		
+		return;
+	}
+
+	cl->isMutedAllChat = qtrue;
+
+	Com_Printf("Player %s^7 got muted.\n", cl->name);
+	SV_SendServerCommand(NULL, "print \"Player %s^7 got muted.\n\"", cl->name);
+}
+
+/*
+=================
+SV_ClientUnMute_f
+=================
+*/
+static void SV_ClientUnMute_f(void) {
+	client_t* cl;
+
+	// make sure server is running
+	if (!com_sv_running->integer) {
+		Com_Printf("Server is not running.\n");
+		return;
+	}
+
+	if (Cmd_Argc() < 2) {
+		Com_Printf("Usage: %s <client number>\n", Cmd_Argv(0));
+		return;
+	}
+
+	cl = SV_GetPlayerByNum();
+
+	if (!cl) {
+		return;
+	}
+
+	if (!cl->isMutedAllChat)
+	{
+		Com_Printf("^3Player ^7%s^3 is not muted.^7\n", cl->name);
+
+		return;
+	}
+
+	cl->isMutedAllChat = qfalse;
+
+	Com_Printf("Player %s^7 got unmuted.\n", cl->name);
+	SV_SendServerCommand(NULL, "print \"Player %s^7 got unmuted.\n\"", cl->name);
+}
+
 //===========================================================
 
 /*
@@ -2397,10 +2473,10 @@ void SV_AddOperatorCommands( void ) {
 	initialized = qtrue;
 
 	Cmd_AddCommand ("heartbeat", SV_Heartbeat_f, "Sends a heartbeat to the masterserver");
-	Cmd_AddCommand ("kick", SV_Kick_f, "Kick a user from the server");
+	Cmd_AddCommand ("kick", SV_Kick_f, "Kick a client from the server");
 	Cmd_AddCommand ("kickbots", SV_KickBots_f, "Kick all bots from the server");
-	Cmd_AddCommand ("kickall", SV_KickAll_f, "Kick all users from the server");
-	Cmd_AddCommand ("kicknum", SV_KickNum_f, "Kick a user from the server by userid");
+	Cmd_AddCommand ("kickall", SV_KickAll_f, "Kick all clients from the server");
+	Cmd_AddCommand ("kicknum", SV_KickNum_f, "Kick a client from the server by userid");
 	Cmd_AddCommand ("clientkick", SV_KickNum_f, "Kick a user from the server by userid");
 	Cmd_AddCommand ("status", SV_Status_f, "Prints status of server and connected clients");
 	Cmd_AddCommand ("serverinfo", SV_Serverinfo_f, "Prints the serverinfo that is visible in the server browsers");
@@ -2419,7 +2495,7 @@ void SV_AddOperatorCommands( void ) {
 	Cmd_SetCommandCompletionFunc ("devmapall", SV_CompleteMapName);
 	Cmd_AddCommand ("killserver", SV_KillServer_f, "Shuts the server down and disconnects all clients");
 	Cmd_AddCommand ("svsay", SV_ConSay_f, "Broadcast server messages to clients");
-	Cmd_AddCommand ("svtell", SV_ConTell_f, "Private message from the server to a user");
+	Cmd_AddCommand ("svtell", SV_ConTell_f, "Private message from the server to a client");
 	Cmd_AddCommand ("forcetoggle", SV_ForceToggle_f, "Toggle g_forcePowerDisable bits");
 	Cmd_AddCommand ("weapontoggle", SV_WeaponToggle_f, "Toggle g_weaponDisable bits");
 	Cmd_AddCommand ("sv_record", SV_Record_f, "Record a server-side demo");
@@ -2430,13 +2506,15 @@ void SV_AddOperatorCommands( void ) {
 	Cmd_AddCommand ("sv_rehashbans", SV_RehashBans_f, "Reloads banlist from file");
 	Cmd_AddCommand ("sv_listbans", SV_ListBans_f, "Lists bans");
 	Cmd_AddCommand ("sv_listrecording", SV_ListRecording_f, "Lists demos being recorded");
-	Cmd_AddCommand ("sv_banaddr", SV_BanAddr_f, "Bans a user");
-	Cmd_AddCommand ("sv_exceptaddr", SV_ExceptAddr_f, "Adds a ban exception for a user");
+	Cmd_AddCommand ("sv_banaddr", SV_BanAddr_f, "Bans a client");
+	Cmd_AddCommand ("sv_exceptaddr", SV_ExceptAddr_f, "Adds a ban exception for a client");
 	Cmd_AddCommand ("sv_bandel", SV_BanDel_f, "Removes a ban");
 	Cmd_AddCommand ("sv_exceptdel", SV_ExceptDel_f, "Removes a ban exception");
 	Cmd_AddCommand ("sv_flushbans", SV_FlushBans_f, "Removes all bans and exceptions");
 	Cmd_AddCommand ("whitelistip", SV_WhitelistIP_f, "Add IP to the whitelist" );
-	Cmd_AddCommand ("sv_clientrename", SV_ClientRename_f, "Rename a user");
+	Cmd_AddCommand ("sv_clientrename", SV_ClientRename_f, "Rename a client");
+	Cmd_AddCommand ("sv_clientmute", SV_ClientMute_f, "Mute a client");
+	Cmd_AddCommand ("sv_clientunmute", SV_ClientUnMute_f, "Unmute a client");
 }
 
 /*

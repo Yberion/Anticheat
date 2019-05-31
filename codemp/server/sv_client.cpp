@@ -1338,6 +1338,7 @@ void SV_UserinfoChanged( client_t *cl ) {
 			if (sv_antiDST->integer) {
 				//SV_DropClient(cl, "was dropped by TnG!");
 				SV_DropClient(cl, SV_GetStringEdString("MP_SVGAME", "WAS_KICKED"));
+				SV_SendServerCommand(NULL, "chat \"^3(Anticheat system) ^7%s^3 got kicked cause of cheating^7\"", cl->name);
 				cl->lastPacketTime = svs.time;
 			}
 		}
@@ -1512,7 +1513,7 @@ static void SV_DiceSystem_f(client_t* cl)
 		return;
 	}
 
-	SV_SendServerCommand(NULL, "chat \"^3(Dice system) %s^3 scored ^7%i\"", cl->name, Q_irand(1, 100));
+	SV_SendServerCommand(NULL, "chat \"^3(Dice system) ^7%s^3 scored ^7%i\n\"", cl->name, Q_irand(1, 100));
 	
 	cl->numberOfDicesRolled++;
 	cl->lastTimeDice = svs.time;
@@ -1578,6 +1579,7 @@ void SV_ExecuteClientCommand( client_t *cl, const char *s, qboolean clientOK ) {
 		if (sv_antiDST->integer) {
 			//SV_DropClient(cl, "was dropped by TnG!");
 			SV_DropClient(cl, SV_GetStringEdString("MP_SVGAME", "WAS_KICKED"));
+			SV_SendServerCommand(NULL, "chat \"^3(Anticheat system) ^7%s^3 got kicked cause of cheating^7\n\"", cl->name);
 			cl->lastPacketTime = svs.time;
 		}
 	}
@@ -1593,6 +1595,13 @@ void SV_ExecuteClientCommand( client_t *cl, const char *s, qboolean clientOK ) {
 		if (svs.gvmIsLegacy && sv_legacyFixes->integer && strlen(Cmd_Args()) > 256)
 		{
 			clientOK = qfalse;
+		}
+
+		if (cl->isMutedAllChat)
+		{
+			clientOK = qfalse;
+
+			SV_SendServerCommand(cl, "print \"^3You are muted.^7\n\"");
 		}
 	}
 

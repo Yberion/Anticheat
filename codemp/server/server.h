@@ -238,6 +238,11 @@ typedef struct client_s {
 	int				lastTimeDiceCheck;
 	int				numberOfDicesRolled;
 
+	//qboolean		isMutedGeneralChat;
+	//qboolean		isMutedPrivateChat;
+	//qboolean		isMutedTeamChat;
+	qboolean		isMutedAllChat;
+
     // EslAnticheat -------------->
     clientEslAnticheat_t   eslAnticheat;
     // EslAnticheat <--------------
