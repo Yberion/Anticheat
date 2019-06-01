@@ -1539,7 +1539,7 @@ static ucmd_t ucmds[] = {
 	{"stopdl",			SV_StopDownload_f},
 	{"donedl",			SV_DoneDownload_f},
 	{"netstatus",		EslAnticheat_NetStatus_f},
-	{"shownet",			EslAnticheat_NetStatus_f}, //EternalJK client
+	{"showNet",			EslAnticheat_NetStatus_f}, //EternalJK client
 	{"dice",			SV_DiceSystem_f},
 
 	{NULL, NULL}
