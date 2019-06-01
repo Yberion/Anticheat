@@ -94,13 +94,15 @@ void EslAnticheat_NetStatus_f(client_t* client)
 	client_t		*cl;
 	playerState_t	*ps;
 	int				ping;
+	int				snaps;
 	char			state[32];
+	char			recording[8];
 
 	status[0] = 0;
 
 	//Q_strcat(status, sizeof(status), "cl score ping rate  fps packets timeNudge timeNudge2 name \n");
-	Q_strcat(status, sizeof(status), "cl score ping rate   fps packets timeNudge snaps name \n");
-	Q_strcat(status, sizeof(status), "-- ----- ---- ------ --- ------- --------- ----- ---------------\n");
+	Q_strcat(status, sizeof(status), "cl score ping rate   fps packets timeNudge snaps R name \n");
+	Q_strcat(status, sizeof(status), "-- ----- ---- ------ --- ------- --------- ----- - ---------------\n");
 
 	for (i = 0, cl = svs.clients; i < sv_maxclients->integer; i++, cl++)
 	{
@@ -127,9 +129,30 @@ void EslAnticheat_NetStatus_f(client_t* client)
 			EslAnticheat_CalcPacketsFPS(cl, &packets, &fps);
 		}
 
+		if (cl->demo.demorecording)
+		{
+			Q_strncpyz(recording, "^1*^7", sizeof(recording));
+		}
+		else
+		{
+			Q_strncpyz(recording, "", sizeof(recording));
+		}
+
+		if (sv_snapsPolicy->integer <= 1)
+		{
+			snaps = sv_fps->integer;
+		}
+		else
+		{
+			int minSnaps = sv_snapsMin->integer > 0 ? Com_Clampi(1, sv_snapsMax->integer, sv_snapsMin->integer) : 1; // between 1 and sv_snapsMax ( 1 <-> 40 )
+			int maxSnaps = sv_snapsMax->integer > 0 ? Q_min(sv_fps->integer, sv_snapsMax->integer) : sv_fps->integer; // can't produce more than sv_fps snapshots/sec, but can send less than sv_fps snapshots/sec
+
+			snaps = Com_Clampi(minSnaps, maxSnaps, cl->wishSnaps);
+		}
+
 		// No need for truncation "feature" if we move name to end
 		//Q_strcat(status, sizeof(status), va("%2i %5i %s %5i %3i %7i %9i %10i %s^7\n", i, ps->persistant[PERS_SCORE], state, cl->rate, fps, packets, cl->timeNudge, cl->timeNudge2, cl->name));
-		Q_strcat(status, sizeof(status), va("%2i %5i %s %6i %3i %7i %9i %5i %s^7\n", i, ps->persistant[PERS_SCORE], state, cl->rate, fps, packets, cl->eslAnticheat.timeNudge, cl->wishSnaps, cl->name));
+		Q_strcat(status, sizeof(status), va("%2i %5i %s %6i %3i %7i %9i %5i %1s %s^7\n", i, ps->persistant[PERS_SCORE], state, cl->rate, fps, packets, cl->eslAnticheat.timeNudge, snaps, recording, cl->name));
 	}
 
 	client->eslAnticheat.lastTimeNetStatus = svs.time;
@@ -189,7 +212,7 @@ static void EslAnticheat_CalcTimenudge(client_t* cl, int Sys_Milliseconds_)
 
 static void EslAnticheat_UpdateAveragePingSinceConnected(client_t* cl, int Sys_Milliseconds_)
 {
-	// Only start to update after 10 seconds being on the server to have a stabilized the ping
+	// Only start to update after 10 seconds being on the server to have a stabilized ping
 	if (svs.time - cl->lastConnectTime <= 10000)
 	{
 		return;
