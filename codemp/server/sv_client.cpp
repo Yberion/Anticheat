@@ -589,6 +589,11 @@ void SV_ClientEnterWorld( client_t *client, usercmd_t *cmd ) {
 		SVC_WhitelistAdr( client->netchan.remoteAddress );
 	}
 
+	if (client->state < CS_ACTIVE || !cmd || !cmd->serverTime)
+	{
+		SV_SendServerCommand(client, "print \"^5%s (^7%s^5) %s^7\n", ESL_ANTICHEAT_STRING, ESL_ANTICHEAT_VERSION, ESL_ANTICHEAT_BY_AUTHOR);
+	}
+
 	// resend all configstrings using the cs commands since these are
 	// no longer sent when the client is CS_PRIMED
 	SV_UpdateConfigstrings( client );
