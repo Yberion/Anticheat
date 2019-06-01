@@ -2373,10 +2373,10 @@ static void SV_ClientRename_f(void) {
 
 /*
 =================
-SV_ClientMute_f
+SV_ClientSilence_f
 =================
 */
-static void SV_ClientMute_f(void) {
+static void SV_ClientSilence_f(void) {
 	client_t* cl;
 
 	// make sure server is running
@@ -2398,23 +2398,23 @@ static void SV_ClientMute_f(void) {
 
 	if (cl->isMutedAllChat)
 	{
-		Com_Printf("^3Player ^7%s^3 already muted.^7\n", cl->name);
+		Com_Printf("^3Player ^7%s^3 already silenced.^7\n", cl->name);
 		
 		return;
 	}
 
 	cl->isMutedAllChat = qtrue;
 
-	Com_Printf("Player %s^7 got muted.\n", cl->name);
-	SV_SendServerCommand(NULL, "print \"Player %s^7 got muted.\n\"", cl->name);
+	Com_Printf("Player %s^7 got silenced.\n", cl->name);
+	SV_SendServerCommand(NULL, "print \"Player %s^7 got silenced.\n\"", cl->name);
 }
 
 /*
 =================
-SV_ClientUnMute_f
+SV_ClientUnSilence_f
 =================
 */
-static void SV_ClientUnMute_f(void) {
+static void SV_ClientUnSilence_f(void) {
 	client_t* cl;
 
 	// make sure server is running
@@ -2436,15 +2436,15 @@ static void SV_ClientUnMute_f(void) {
 
 	if (!cl->isMutedAllChat)
 	{
-		Com_Printf("^3Player ^7%s^3 is not muted.^7\n", cl->name);
+		Com_Printf("^3Player ^7%s^3 is not silenced.^7\n", cl->name);
 
 		return;
 	}
 
 	cl->isMutedAllChat = qfalse;
 
-	Com_Printf("Player %s^7 got unmuted.\n", cl->name);
-	SV_SendServerCommand(NULL, "print \"Player %s^7 got unmuted.\n\"", cl->name);
+	Com_Printf("Player %s^7 got unsilenced.\n", cl->name);
+	SV_SendServerCommand(NULL, "print \"Player %s^7 got unsilenced.\n\"", cl->name);
 }
 
 //===========================================================
@@ -2513,8 +2513,8 @@ void SV_AddOperatorCommands( void ) {
 	Cmd_AddCommand ("sv_flushbans", SV_FlushBans_f, "Removes all bans and exceptions");
 	Cmd_AddCommand ("whitelistip", SV_WhitelistIP_f, "Add IP to the whitelist" );
 	Cmd_AddCommand ("sv_clientrename", SV_ClientRename_f, "Rename a client");
-	Cmd_AddCommand ("sv_clientmute", SV_ClientMute_f, "Mute a client");
-	Cmd_AddCommand ("sv_clientunmute", SV_ClientUnMute_f, "Unmute a client");
+	Cmd_AddCommand ("sv_clientsilence", SV_ClientSilence_f, "Silence a client");
+	Cmd_AddCommand ("sv_clientunsilence", SV_ClientUnSilence_f, "Unsilence a client");
 }
 
 /*
