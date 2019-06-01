@@ -1518,7 +1518,7 @@ static void SV_DiceSystem_f(client_t* cl)
 		return;
 	}
 
-	SV_SendServerCommand(NULL, "chat \"^3(Dice system) ^7%s^3 scored ^7%i\n\"", cl->name, Q_irand(1, 100));
+	SV_SendServerCommand(NULL, "chat \"^3(Dice system) ^7%s^3 scored ^7%i\"", cl->name, Q_irand(1, 100));
 	
 	cl->numberOfDicesRolled++;
 	cl->lastTimeDice = svs.time;
