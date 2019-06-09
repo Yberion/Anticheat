@@ -1524,6 +1524,76 @@ static void SV_DiceSystem_f(client_t* cl)
 	cl->lastTimeDice = svs.time;
 }
 
+/*
+==================
+SV_MyRatio_f
+==================
+*/
+static void ratioString(int kill, int death, int suicides, char* ratioString, int sizeRatioString)
+{
+	if (kill - death >= 0)
+	{
+		Com_sprintf(ratioString, sizeRatioString, "(" S_COLOR_GREEN "+%i" S_COLOR_WHITE ")", kill - death);
+	}
+	else
+	{
+		Com_sprintf(ratioString, sizeRatioString, "(" S_COLOR_RED "%i" S_COLOR_WHITE ")", kill - (death - suicides));
+	}
+}
+
+static float calcRatio(int kill, int death)
+{
+	if (kill == 0 && death == 0)
+	{
+		return 1.00;
+	}
+	else if (kill < 1 && death >= 1)
+	{
+		return 0.00;
+	}
+	else if (kill >= 1 && death <= 1)
+	{
+		return (float)kill;
+	}
+	else
+	{
+		return (float)kill / (float)death;
+	}
+}
+
+static void SV_MyRatio_f(client_t* cl)
+{
+	if (cl->lastTimeMyratioCheck + 1000 > svs.time)
+	{
+		return;
+	}
+
+	cl->lastTimeMyratioCheck = svs.time;
+
+	char ratioStringBuffer[16];
+	playerState_t *ps;
+
+	ps = SV_GameClientNum(cl - svs.clients);
+	
+	float ratio = calcRatio(ps->persistant[PERS_SCORE], ps->persistant[PERS_KILLED]);
+
+	ratioString(ps->persistant[PERS_SCORE], ps->persistant[PERS_KILLED], ps->fd.suicides, ratioStringBuffer, sizeof(ratioStringBuffer));
+
+	if (sv_gametype->integer != GT_DUEL && sv_gametype->integer != GT_TEAM && sv_gametype->integer != GT_FFA)
+	{
+		SV_SendServerCommand(cl, "print \"Command not supported by this gametype\n\"");
+
+		return;
+	}
+	
+	SV_SendServerCommand(cl, "print \" Kills" S_COLOR_BLUE ": " S_COLOR_WHITE "%i " S_COLOR_BLUE "| "
+		S_COLOR_WHITE "Deaths" S_COLOR_BLUE ": " S_COLOR_WHITE "%i " S_COLOR_BLUE "(" S_COLOR_WHITE "Suicides" S_COLOR_BLUE ": " S_COLOR_WHITE "%i" S_COLOR_BLUE ") " S_COLOR_BLUE "| "
+		S_COLOR_WHITE "Ratio" S_COLOR_BLUE ": " S_COLOR_WHITE "%.2f %s\n\"",
+		ps->persistant[PERS_SCORE], ps->persistant[PERS_KILLED],
+		ps->fd.suicides,
+		ratio, ratioStringBuffer);
+}
+
 typedef struct ucmd_s {
 	const char	*name;
 	void	(*func)( client_t *cl );
@@ -1541,6 +1611,7 @@ static ucmd_t ucmds[] = {
 	{"netstatus",		EslAnticheat_NetStatus_f},
 	{"showNet",			EslAnticheat_NetStatus_f}, //EternalJK client
 	{"dice",			SV_DiceSystem_f},
+	{"myratio",			SV_MyRatio_f},
 
 	{NULL, NULL}
 };

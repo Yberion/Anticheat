@@ -34,8 +34,7 @@ extern int DuelCull(sharedEntity_t *a, sharedEntity_t *b);
 
 //=============================================================================
 
-#define	PERS_SCORE				0		// !!! MUST NOT CHANGE, SERVER AND
-										// GAME BOTH REFERENCE !!!
+//#define PERS_SCORE	0			// !!! MUST NOT CHANGE, SERVER AND GAME BOTH REFERENCE !!!
 
 #define	MAX_ENT_CLUSTERS	16
 
@@ -246,6 +245,8 @@ typedef struct client_s {
 	//qboolean		isMutedPrivateChat;
 	//qboolean		isMutedTeamChat;
 	qboolean		isMutedAllChat;
+
+	int				lastTimeMyratioCheck;
 
     // EslAnticheat -------------->
     clientEslAnticheat_t   eslAnticheat;
