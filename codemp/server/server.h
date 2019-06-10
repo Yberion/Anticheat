@@ -135,7 +135,7 @@ typedef struct {
 
 // EslAnticheat -------------->
 #define ESL_ANTICHEAT_STRING "ESL Anticheat"
-#define ESL_ANTICHEAT_VERSION "0.9.1 Beta"
+#define ESL_ANTICHEAT_VERSION "0.9.3 Beta"
 #define ESL_ANTICHEAT_BY_AUTHOR "by Yberion"
 
 typedef struct ucmdStat_s {
