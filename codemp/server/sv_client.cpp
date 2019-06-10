@@ -1618,6 +1618,40 @@ static ucmd_t ucmds[] = {
 
 /*
 ==================
+SV_SpectatorChat_f
+==================
+*/
+static void SV_SpectatorChat_f(client_t* cl, const char *message)
+{
+	client_t* otherClient;
+	playerState_t* ps;
+	int i;
+
+	for (i = 0, otherClient = svs.clients; i < sv_maxclients->integer; i++, otherClient++)
+	{
+		if (!cl->state)
+		{
+			continue;
+		}
+
+		if (cl->state != CS_ACTIVE)
+		{
+			continue;
+		}
+
+		ps = SV_GameClientNum(otherClient - svs.clients);
+
+		if (ps->pm_type != PM_SPECTATOR && !(ps->pm_flags & PMF_FOLLOW))
+		{
+			continue;
+		}
+
+		SV_SendServerCommand(otherClient, "tchat \"(%s%c%c): %c%c%s\"", cl->name, Q_COLOR_ESCAPE, S_COLOR_WHITE, Q_COLOR_ESCAPE, COLOR_CYAN, message);
+	}
+}
+
+/*
+==================
 SV_ExecuteClientCommand
 
 Also called by bot code
@@ -1664,11 +1698,12 @@ void SV_ExecuteClientCommand( client_t *cl, const char *s, qboolean clientOK ) {
 	if (!Q_stricmpn(cmd, "say", 3) || !Q_stricmpn(cmd, "say_team", 8) || !Q_stricmpn(cmd, "tell", 4))
 	{
 		sayCmd = qtrue;
+		const char* message = Cmd_Args();
 
 		// 256 because we don't need more, the chat can handle 150 max char
 		// and allowing 256 prevent a message to not be sent instead of being truncated
 		// if this is a bit more than 150
-		if (svs.gvmIsLegacy && sv_legacyFixes->integer && strlen(Cmd_Args()) > 256)
+		if (svs.gvmIsLegacy && sv_legacyFixes->integer && strlen(message) > 256)
 		{
 			clientOK = qfalse;
 		}
@@ -1678,6 +1713,19 @@ void SV_ExecuteClientCommand( client_t *cl, const char *s, qboolean clientOK ) {
 			clientOK = qfalse;
 
 			SV_SendServerCommand(cl, "print \"^3You are muted.^7\n\"");
+		}
+
+		// Spectator chat in duel & ffa gametype, the client isn't muted + the message isn't too long
+		if (clientOK && (sv_gametype->integer == GT_DUEL || sv_gametype->integer == GT_FFA) && !Q_stricmpn(cmd, "say_team", 8))
+		{
+			playerState_t* ps = SV_GameClientNum(cl - svs.clients);
+
+			if (ps->pm_type == PM_SPECTATOR || ps->pm_flags & PMF_FOLLOW)
+			{
+				SV_SpectatorChat_f(cl, message);
+
+				clientOK = qfalse;
+			}
 		}
 	}
 
