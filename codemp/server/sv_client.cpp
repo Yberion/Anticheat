@@ -1586,7 +1586,7 @@ static void SV_MyRatio_f(client_t* cl)
 		return;
 	}
 	
-	SV_SendServerCommand(cl, "print \" Kills" S_COLOR_BLUE ": " S_COLOR_WHITE "%i " S_COLOR_BLUE "| "
+	SV_SendServerCommand(cl, "print \"Kills" S_COLOR_BLUE ": " S_COLOR_WHITE "%i " S_COLOR_BLUE "| "
 		S_COLOR_WHITE "Deaths" S_COLOR_BLUE ": " S_COLOR_WHITE "%i " S_COLOR_BLUE "(" S_COLOR_WHITE "Suicides" S_COLOR_BLUE ": " S_COLOR_WHITE "%i" S_COLOR_BLUE ") " S_COLOR_BLUE "| "
 		S_COLOR_WHITE "Ratio" S_COLOR_BLUE ": " S_COLOR_WHITE "%.2f %s\n\"",
 		ps->persistant[PERS_SCORE], ps->persistant[PERS_KILLED],
