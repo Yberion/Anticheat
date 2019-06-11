@@ -1646,7 +1646,7 @@ static void SV_SpectatorChat_f(client_t* cl, const char *message)
 			continue;
 		}
 
-		SV_SendServerCommand(otherClient, "tchat \"(%s%c%c): %c%c%s\"", cl->name, Q_COLOR_ESCAPE, S_COLOR_WHITE, Q_COLOR_ESCAPE, COLOR_CYAN, message);
+		SV_SendServerCommand(otherClient, "tchat \"(%s" S_COLOR_WHITE "): " S_COLOR_CYAN "%s\"", cl->name, message);
 	}
 }
 
