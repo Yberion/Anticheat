@@ -2177,29 +2177,6 @@ static void SV_Record_f(void) {
 	SV_RecordDemo(cl, demoName);
 }
 
-/*
-=================
-SV_WhitelistIP_f
-=================
-*/
-static void SV_WhitelistIP_f( void ) {
-	if ( Cmd_Argc() < 2 ) {
-		Com_Printf ("Usage: whitelistip <ip>...\n");
-		return;
-	}
-
-	for ( int i = 1; i < Cmd_Argc(); i++ ) {
-		netadr_t	adr;
-
-		if ( NET_StringToAdr( Cmd_Argv(i), &adr ) ) {
-			SVC_WhitelistAdr( adr );
-			Com_Printf("Added %s to the IP whitelist\n", NET_AdrToString(adr));
-		} else {
-			Com_Printf("Incorrect IP address: %s\n", Cmd_Argv(i));
-		}
-	}
-}
-
 static void SV_RecordInGamePlayers_f(void) {
 	char			demoPrefix[32];
 	char			demoPlayerName[MAX_NAME_LENGTH];
