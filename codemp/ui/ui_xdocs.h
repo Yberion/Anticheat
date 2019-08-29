@@ -112,10 +112,25 @@ XDOCS_CVAR_DEF("cg_newFont", "Uses a different font for the chat",
 	SETTING("1", "Use the new font")
 )
 
+XDOCS_CVAR_DEF("cg_chatBoxShowHistory", "Allows showing message history in chatbox when console is open",
+	SETTING("0", "Enabled") NL
+	SETTING("1", "Disabled (baseJKA behavior)")
+)
+
+XDOCS_CVAR_DEF("cg_teamChatsOnly", "Hide non-team chat messages",
+	"Ignored messages will only be printed in the console." NL
+	SETTING("0", "Show all chat") NL
+	SETTING("1", "Hide global chat from all players") NL
+	SETTING("2", "Hide global chat from spectators while you are in-game (requires compatible server mod)")
+)
+
 XDOCS_CVAR_DEF("cg_chatBoxFontSize", "Scale of the chat box font",""
 )
 
-XDOCS_CVAR_DEF("cg_chatBoxCutOffLength", "Length of chat box before starting a new line",""
+XDOCS_CVAR_DEF("cg_chatBoxCutOffLength", "Width of a line in the chatbox before breaking to a new one",
+	SETTING("350", "jaPRO cutoff length") NL
+	SETTING("550", "baseJKA default") NL
+	SETTING("640", "Maximum")
 )
 
 XDOCS_CVAR_DEF("cg_crossHairRed", "Custom red color of the crosshair",""
@@ -182,9 +197,10 @@ XDOCS_CVAR_DEF("cg_jumpSounds", "Play sound when players jump",
 	SETTING("3", "Play only when local client jumps")
 )
 
-XDOCS_CVAR_DEF("cg_chatSounds", "Play sound when chat messages appear",
+XDOCS_CVAR_DEF("cg_chatSounds", "Play sound when chat messages are received",
 	SETTING("0", "Don't play chat sounds") NL
-	SETTING("1", "Play chat sounds")
+	SETTING("1", "Play chat sounds for all messages") NL
+	SETTING("2", "Play chat sounds for private and team messages only")
 )
 
 XDOCS_CVAR_DEF("cg_hitSounds", "Play a sound when you hit someone",
@@ -198,6 +214,18 @@ XDOCS_CVAR_DEF("cg_hitSounds", "Play a sound when you hit someone",
 XDOCS_CVAR_DEF("cg_raceSounds", "Play sound when race is started",
 	SETTING("0", "Don't play race sound") NL
 	SETTING("1", "Play race sounds")
+)
+
+XDOCS_CVAR_DEF("cg_duelSounds", "Enables/disables announcer/center print at the start of private duels",
+			   SETTING("0", "Do not announce the start of duel") NL
+			   SETTING("1", "Announce and center print \"BEGIN\" (baseJKA behavior)") NL
+			   SETTING("2", "Announce, but do not center print") NL
+			   SETTING("3", "Center print, but do not announce")
+)
+
+XDOCS_CVAR_DEF("cg_duelMusic", "Enables special in-game music for private duels",
+			SETTING("0", "Use map music while in private duels") NL
+			SETTING("1", "Play music track for private duels (baseJKA behavior)")
 )
 
 //Visuals
@@ -264,6 +292,20 @@ XDOCS_CVAR_DEF("cg_noTeleFX", "Disables the teleportation effect",
 	SETTING("1", "Teleport effect is off")
 )
 
+XDOCS_CVAR_DEF("g_gametype", "Gametype that the server is currently on",
+	SETTING("0", "FFA") NL
+	SETTING("1", "Holocron") NL
+	SETTING("2", "Jedi Master") NL
+	SETTING("3", "Duel") NL
+	SETTING("4", "Powerduel") NL
+	SETTING("5", "SP FFA") NL
+	SETTING("6", "TFFA") NL
+	SETTING("7", "Siege") NL
+	SETTING("8", "CTF") NL
+	SETTING("9", "CTY")
+)
+
+//Work from above this line
 
 // ...
 
