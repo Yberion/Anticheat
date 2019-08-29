@@ -58,6 +58,7 @@ XCVAR_DEF( cg_scoreDeaths,			"1",	NULL,					CVAR_ARCHIVE )
 XCVAR_DEF( cg_killMessage,			"1",	NULL,					CVAR_ARCHIVE )
 XCVAR_DEF( cg_newFont,				"0",	NULL,					CVAR_ARCHIVE )
 XCVAR_DEF( cg_chatBox,				"10000",NULL,					CVAR_ARCHIVE )
+XCVAR_DEF( cg_chatBoxShowHistory,	"0",	NULL,					CVAR_ARCHIVE ) //shows past messages when console is open
 XCVAR_DEF( cg_chatBoxFontSize,		"1",	NULL,					CVAR_ARCHIVE )
 XCVAR_DEF( cg_chatBoxLines,			"5",	NULL,					CVAR_ARCHIVE ) //this would be called chatBoxHeight if baseJKA didn't use that
 XCVAR_DEF( cg_chatBoxHeight,		"350",	NULL,					CVAR_ARCHIVE )
@@ -92,6 +93,8 @@ XCVAR_DEF( cg_jumpSounds,						"0",	NULL,								CVAR_ARCHIVE )
 XCVAR_DEF( cg_chatSounds,						"1",	NULL,								CVAR_ARCHIVE )
 XCVAR_DEF( cg_hitsounds,						"0",	NULL,								CVAR_ARCHIVE )
 XCVAR_DEF( cg_raceSounds,						"1",	NULL,								CVAR_ARCHIVE ) //Bitvalue, but so far we just have RS_TIMER_START set up
+XCVAR_DEF( cg_duelSounds,						"1",	NULL,								CVAR_ARCHIVE )
+XCVAR_DEF( cg_duelMusic,						"1",	NULL,								CVAR_ARCHIVE )
 
 //Visuals
 XCVAR_DEF( cg_remaps,							"1",	NULL,								CVAR_ARCHIVE|CVAR_LATCH )
@@ -154,7 +157,6 @@ XCVAR_DEF( cg_logChat,							"1",	NULL,					CVAR_ARCHIVE )
 //BETA
 XCVAR_DEF( cg_specHud,							"0",	NULL,					CVAR_ARCHIVE )
 XCVAR_DEF( cg_minimapScale,						"1",	NULL,					CVAR_NONE )
-XCVAR_DEF( cg_duelMusic,						"1",	NULL,					CVAR_ARCHIVE )
 XCVAR_DEF( cg_drawHud,							"1",	NULL,					CVAR_ARCHIVE )
 
 XCVAR_DEF( cg_predictKnockback,					"0",	NULL,					0 )
