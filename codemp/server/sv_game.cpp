@@ -146,6 +146,50 @@ void SV_InitGameProgs( void ) {
 	SV_InitGame( qfalse );
 }
 
+/*
+====================
+SV_ForceTeamSpectatorEveryoneIg
+
+Ig = ingame
+====================
+*/
+
+static void SV_ForceteamSpectatorEveryoneIg(void)
+{
+	client_t* client;
+	playerState_t* ps;
+	char clientNum[4];
+	char* oldArg = Cmd_Argv(1);
+	int i;
+
+	for (i = 0, client = svs.clients; i < sv_maxclients->integer; i++, client++)
+	{
+		if (!client->state)
+		{
+			continue;
+		}
+
+		if (client->state != CS_ACTIVE)
+		{
+			continue;
+		}
+
+		ps = SV_GameClientNum(client - svs.clients);
+
+		if (ps->pm_type == PM_SPECTATOR || (ps->pm_flags & PMF_FOLLOW))
+		{
+			continue;
+		}
+
+		snprintf(clientNum, sizeof(clientNum), "%d", i);
+
+		Cmd_Update_Argv(1, clientNum);
+
+		GVM_ConsoleCommand();
+	}
+
+	Cmd_Update_Argv(1, oldArg);
+}
 
 /*
 ====================
@@ -157,6 +201,17 @@ See if the current console command is claimed by the game
 qboolean SV_GameCommand( void ) {
 	if ( sv.state != SS_GAME ) {
 		return qfalse;
+	}
+
+	const char *arg2 = Cmd_Argv(2);
+
+	// Check if the current command is "forceteam" with argument -1 and spectator || s
+	// If so, force every ingame players to join the spectator team
+	if (!Q_stricmpn(Cmd_Argv(0), "forceteam", 9) && !Q_stricmpn(Cmd_Argv(1), "-1", 2) && (!Q_stricmpn(arg2, "spectator", 9) || !Q_stricmpn(arg2, "s", 1)))
+	{
+		SV_ForceteamSpectatorEveryoneIg();
+
+		return qtrue;
 	}
 
 	return GVM_ConsoleCommand();

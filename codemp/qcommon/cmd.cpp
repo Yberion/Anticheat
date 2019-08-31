@@ -378,6 +378,25 @@ char	*Cmd_Argv( int arg ) {
 
 	return cmd_argv[arg];
 }
+/*
+============
+Cmd_Update_Argv
+============
+*/
+void Cmd_Update_Argv(int arg, char* newArg)
+{
+	if ((unsigned)arg >= (unsigned)cmd_argc)
+	{
+		return;
+	}
+
+	if (!newArg)
+	{
+		return;
+	}
+
+	cmd_argv[arg] = newArg;
+}
 
 /*
 ============
@@ -567,7 +586,7 @@ static void Cmd_TokenizeString2( const char *text_in, qboolean ignoreQuotes ) {
 		}
 
 		// handle quoted strings
-    // NOTE TTimo this doesn't handle \" escaping
+		// NOTE TTimo this doesn't handle \" escaping
 		if ( !ignoreQuotes && *text == '"' ) {
 			cmd_argv[cmd_argc] = textOut;
 			cmd_argc++;
