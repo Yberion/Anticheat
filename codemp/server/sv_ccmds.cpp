@@ -2353,8 +2353,35 @@ static void SV_ClientRename_f(void) {
 SV_ClientSilence_f
 =================
 */
+bitChatType_t chatType[] = {
+	{ "All chat", -1 },
+	{ "Public chat (say)", SAY_ALL },
+	{ "Team chat (say_team)", SAY_TEAM },
+	{ "Private chat (tell)", SAY_TELL }
+};
+
+static const int MAX_CHATTYPES = ARRAY_LEN(chatType);
+
+static void SV_ClientDisplaySilencedChat_f(client_t* client) {
+	int i;
+
+	Com_Printf("Client: %s\n", client->name);
+
+	for (i = 1; i < MAX_CHATTYPES; ++i)
+	{
+		if (client->silence & (1 << chatType[i].type))
+		{
+			Com_Printf("[X] %d - %s\n", chatType[i].type, chatType[i].description);
+		}
+		else
+		{
+			Com_Printf("[ ] %d - %s\n", chatType[i].type, chatType[i].description);
+		}
+	}
+}
+
 static void SV_ClientSilence_f(void) {
-	client_t* cl;
+	client_t* client;
 
 	// make sure server is running
 	if (!com_sv_running->integer) {
@@ -2363,27 +2390,77 @@ static void SV_ClientSilence_f(void) {
 	}
 
 	if (Cmd_Argc() < 2) {
-		Com_Printf("Usage: %s <client number>\n", Cmd_Argv(0));
+		int i;
+
+		Com_Printf("To display which chat the client is silenced on: %s <client number>\n", Cmd_Argv(0));
+		Com_Printf("To silence a client: %s <client number> <chat type>\n\n", Cmd_Argv(0));
+		Com_Printf("chat type:\n");
+
+		for (i = 0; i < MAX_CHATTYPES; ++i)
+		{
+			Com_Printf("%d - %s\n", chatType[i].type, chatType[i].description);
+		}
+
 		return;
 	}
 
-	cl = SV_GetPlayerByNum();
+	client = SV_GetPlayerByNum();
 
-	if (!cl) {
+	if (!client) {
 		return;
 	}
 
-	if (cl->isMutedAllChat)
+	if (Cmd_Argc() == 2)
 	{
-		Com_Printf("^3Player ^7%s^3 already silenced.^7\n", cl->name);
-		
+		SV_ClientDisplaySilencedChat_f(client);
+
 		return;
 	}
 
-	cl->isMutedAllChat = qtrue;
+	const char* chatTypeArg = Cmd_Argv(2);
 
-	Com_Printf("Player %s^7 got silenced.\n", cl->name);
-	SV_SendServerCommand(NULL, "print \"Player %s^7 got silenced.\n\"", cl->name);
+	if (!Q_isanumber(chatTypeArg))
+	{
+		Com_Printf("Bad chat type format: %s\n", chatTypeArg);
+
+		return;
+	}
+
+	int chatTypeValue = atoi(chatTypeArg);
+
+	if (chatTypeValue < -1 || chatTypeValue >= MAX_CHATTYPES)
+	{
+		Com_Printf("Bad chat type number: %d\n", chatTypeValue);
+
+		return;
+	}
+
+	if (chatTypeValue == -1)
+	{
+		int i;
+
+		for (i = 1; i < MAX_CHATTYPES; ++i)
+		{
+			client->silence |= (1 << chatType[i].type);
+		}
+
+		//Com_Printf("Client %s^7 got silenced on %s.\n", client->name, chatType[0].description);
+		SV_SendServerCommand(NULL, "print \"Client %s^7 got silenced on %s.\n\"", client->name, chatType[0].description);
+	}
+	else
+	{
+		if (client->silence & (1 << chatType[chatTypeValue + 1].type))
+		{
+			Com_Printf("^3Client ^7%s^3 already silenced on %s.^7\n", client->name, chatType[chatTypeValue + 1].description);
+		}
+		else
+		{
+			client->silence |= (1 << chatType[chatTypeValue + 1].type);
+
+			//Com_Printf("Client %s^7 got silenced on %s.\n", client->name, chatType[chatTypeValue + 1].description);
+			SV_SendServerCommand(NULL, "print \"Client %s^7 got silenced on %s.\n\"", client->name, chatType[chatTypeValue + 1].description);
+		}
+	}
 }
 
 /*
@@ -2392,7 +2469,7 @@ SV_ClientUnSilence_f
 =================
 */
 static void SV_ClientUnSilence_f(void) {
-	client_t* cl;
+	client_t* client;
 
 	// make sure server is running
 	if (!com_sv_running->integer) {
@@ -2401,27 +2478,77 @@ static void SV_ClientUnSilence_f(void) {
 	}
 
 	if (Cmd_Argc() < 2) {
-		Com_Printf("Usage: %s <client number>\n", Cmd_Argv(0));
+		int i;
+
+		Com_Printf("To display which chat the client is silenced on: %s <client number>\n", Cmd_Argv(0));
+		Com_Printf("To unsilence a client: %s <client number> <chat type>\n\n", Cmd_Argv(0));
+		Com_Printf("chat type:\n");
+
+		for (i = 0; i < MAX_CHATTYPES; ++i)
+		{
+			Com_Printf("%d - %s\n", chatType[i].type, chatType[i].description);
+		}
+
 		return;
 	}
 
-	cl = SV_GetPlayerByNum();
+	client = SV_GetPlayerByNum();
 
-	if (!cl) {
+	if (!client) {
 		return;
 	}
 
-	if (!cl->isMutedAllChat)
+	if (Cmd_Argc() == 2)
 	{
-		Com_Printf("^3Player ^7%s^3 is not silenced.^7\n", cl->name);
+		SV_ClientDisplaySilencedChat_f(client);
 
 		return;
 	}
 
-	cl->isMutedAllChat = qfalse;
+	const char* chatTypeArg = Cmd_Argv(2);
 
-	Com_Printf("Player %s^7 got unsilenced.\n", cl->name);
-	SV_SendServerCommand(NULL, "print \"Player %s^7 got unsilenced.\n\"", cl->name);
+	if (!Q_isanumber(chatTypeArg))
+	{
+		Com_Printf("Bad chat type format: %s\n", chatTypeArg);
+
+		return;
+	}
+
+	int chatTypeValue = atoi(chatTypeArg);
+
+	if (chatTypeValue < -1 || chatTypeValue >= MAX_CHATTYPES)
+	{
+		Com_Printf("Bad chat type number: %d\n", chatTypeValue);
+
+		return;
+	}
+
+	if (chatTypeValue == -1)
+	{
+		int i;
+
+		for (i = 1; i < MAX_CHATTYPES; ++i)
+		{
+			client->silence &= ~(1 << chatType[i].type);
+		}
+
+		//Com_Printf("Client %s^7 got unsilenced on %s.\n", client->name, chatType[0].description);
+		SV_SendServerCommand(NULL, "print \"Client %s^7 got unsilenced on %s.\n\"", client->name, chatType[0].description);
+	}
+	else
+	{
+		if (!(client->silence & (1 << chatType[chatTypeValue + 1].type)))
+		{
+			Com_Printf("^3Client ^7%s^3 already unsilenced on %s.^7\n", client->name, chatType[chatTypeValue + 1].description);
+		}
+		else
+		{
+			client->silence &= ~(1 << chatType[chatTypeValue + 1].type);
+
+			//Com_Printf("Client %s^7 got unsilenced on %s.\n", client->name, chatType[chatTypeValue + 1].description);
+			SV_SendServerCommand(NULL, "print \"Client %s^7 got unsilenced on %s.\n\"", client->name, chatType[chatTypeValue + 1].description);
+		}
+	}
 }
 
 //===========================================================

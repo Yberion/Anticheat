@@ -1643,6 +1643,8 @@ SV_ExecuteClientCommand
 Also called by bot code
 ==================
 */
+extern bitChatType_t chatType[];
+
 void SV_ExecuteClientCommand( client_t *cl, const char *s, qboolean clientOK ) {
 	const ucmd_t *u;
 	const char *cmd;
@@ -1692,17 +1694,33 @@ void SV_ExecuteClientCommand( client_t *cl, const char *s, qboolean clientOK ) {
 		if (svs.gvmIsLegacy && sv_legacyFixes->integer && strlen(message) > 256)
 		{
 			clientOK = qfalse;
+			goto Processe;
 		}
 
-		if (cl->isMutedAllChat)
+		if (!Q_stricmpn(cmd, "say", 3) && strlen(cmd) == 3 && cl->silence & (1 << chatType[1].type))
 		{
-			clientOK = qfalse;
+			SV_SendServerCommand(cl, "print \"^3You are silenced on %s.^7\n\"", chatType[1].description);
 
-			SV_SendServerCommand(cl, "print \"^3You are muted.^7\n\"");
+			clientOK = qfalse;
+			goto Processe;
+		}
+		else if (!Q_stricmpn(cmd, "say_team", 8) && cl->silence & (1 << chatType[2].type))
+		{
+			SV_SendServerCommand(cl, "print \"^3You are silenced on %s.^7\n\"", chatType[2].description);
+
+			clientOK = qfalse;
+			goto Processe;
+		}
+		else if (!Q_stricmpn(cmd, "tell", 4) && cl->silence & (1 << chatType[3].type))
+		{
+			SV_SendServerCommand(cl, "print \"^3You are silenced on %s.^7\n\"", chatType[3].description);
+
+			clientOK = qfalse;
+			goto Processe;
 		}
 
 		// Spectator chat in duel & ffa gametype, the client isn't muted + the message isn't too long
-		if (clientOK && (sv_gametype->integer == GT_DUEL || sv_gametype->integer == GT_FFA) && !Q_stricmpn(cmd, "say_team", 8))
+		if ((sv_gametype->integer == GT_DUEL || sv_gametype->integer == GT_FFA) && !Q_stricmpn(cmd, "say_team", 8))
 		{
 			playerState_t* ps = SV_GameClientNum(cl - svs.clients);
 
@@ -1711,6 +1729,7 @@ void SV_ExecuteClientCommand( client_t *cl, const char *s, qboolean clientOK ) {
 				SV_SpectatorChat_f(cl, message);
 
 				clientOK = qfalse;
+				goto Processe;
 			}
 		}
 	}
@@ -1738,6 +1757,7 @@ void SV_ExecuteClientCommand( client_t *cl, const char *s, qboolean clientOK ) {
 			clientOK = qfalse;
 	}
 
+Processe:
 	if (clientOK) {
 		// pass unknown strings to the game
 		if (!u->name && sv.state == SS_GAME && (cl->state == CS_ACTIVE || cl->state == CS_PRIMED)) {

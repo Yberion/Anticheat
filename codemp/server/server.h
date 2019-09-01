@@ -173,6 +173,13 @@ typedef struct clientEslAnticheat_s {
 } clientEslAnticheat_t;
 // EslAnticheat <--------------
 
+typedef struct bitChatType_s {
+	const char* description;
+	const int type;
+} bitChatType_t;
+
+extern bitChatType_t chatType[];
+
 typedef struct client_s {
 	clientState_t	state;
 	char			userinfo[MAX_INFO_STRING];		// name, etc
@@ -241,10 +248,7 @@ typedef struct client_s {
 	int				lastTimeDiceCheck;
 	int				numberOfDicesRolled;
 
-	//qboolean		isMutedGeneralChat;
-	//qboolean		isMutedPrivateChat;
-	//qboolean		isMutedTeamChat;
-	qboolean		isMutedAllChat;
+	int				silence;
 
 	int				lastTimeMyratioCheck;
 
