@@ -134,7 +134,7 @@ typedef struct {
 } demoInfo_t;
 
 // EslAnticheat -------------->
-#define ESL_ANTICHEAT_STRING "ESL Anticheat"
+#define ESL_ANTICHEAT_STRING "Anti-Cheat"
 #define ESL_ANTICHEAT_VERSION "0.9.4 Beta"
 #define ESL_ANTICHEAT_BY_AUTHOR "by Yberion"
 

@@ -1,4 +1,4 @@
-@REM Create OpenJK projects for Visual Studio 2015 using CMake
+@REM Create JKA_YBEProxy projects for Visual Studio 2015 using CMake
 @echo off
 for %%X in (cmake.exe) do (set FOUND=%%~$PATH:X)
 if not defined FOUND (
@@ -13,6 +13,6 @@ if not defined FOUND (
 )
 if not exist build\nul (mkdir build)
 pushd build
-cmake -G "Visual Studio 14" -T v140_xp -D MSVC_RUNTIME=static -D CMAKE_INSTALL_PREFIX=../install ..
+cmake -G "Visual Studio 14" -A x64 -T host=x64 -T v140_xp -D MSVC_RUNTIME=static ..
 popd
 pause
